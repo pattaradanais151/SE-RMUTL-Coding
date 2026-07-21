@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700;800&family=Sarabun:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  /* พื้นหลังหน้า Guest (Navy Glass) */
+  .bg-glass-guest {
+    background: 
+      radial-gradient(ellipse 900px 500px at 12% -10%, rgba(201, 162, 75, 0.10), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 0%, rgba(63, 161, 137, 0.08), transparent 55%),
+      linear-gradient(180deg, #0f1c33 0%, #13223e 100%);
+    background-attachment: fixed;
+  }
+  
+  .bg-glass-guest::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image: 
+      linear-gradient(rgba(244, 239, 227, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(244, 239, 227, 0.035) 1px, transparent 1px);
+    background-size: 28px 28px;
+    mask-image: radial-gradient(ellipse 1200px 800px at 50% 0%, black, transparent 75%);
+    z-index: 0;
+  }
+
+  /* พื้นหลังสไตล์ macOS แบบ Gradient (จาก style.css) */
+  .bg-macos-gradient {
+    background: linear-gradient(-45deg, #4158D0, #C850C0, #FFCC70);
+    background-size: 400% 400%;
+  }
+
+  /* พื้นหลัง Admin Login (Dark Slate) */
+  .bg-admin-dark {
+    background-color: #0f172a;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  /* Glass Panel พื้นฐาน */
+  .glass-panel {
+    @apply bg-navy-850 border border-navy-750 rounded-[10px] shadow-[0_12px_28px_-12px_rgba(0,0,0,0.55)];
+  }
+}
+
+/* ลบ Default Outline และเปลี่ยนเป็นสี Brass (จากไฟล์เก่า) */
+:focus-visible {
+  outline: 2px solid #c9a24b;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+/* =========================================
+   Custom Scrollbar
+========================================= */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* สี Scrollbar โหมดสว่าง */
+::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1; 
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8; 
+}
+
+/* สี Scrollbar โหมดมืด (Dark Mode) */
+.dark ::-webkit-scrollbar-thumb {
+  background-color: #334155; 
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: #475569; 
+}
