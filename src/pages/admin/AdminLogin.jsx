@@ -163,7 +163,7 @@ const AdminLogin = () => {
                 <FaShieldAlt className="logo-fallback" />
               ) : (
                 <img
-                  src="/logo.PNG"
+                  src="/logo-landing.jpg"
                   alt="SE-JOB Logo"
                   className="login-img"
                   onError={() => setLogoError(true)}

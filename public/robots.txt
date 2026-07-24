@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://se-rmutl.vercel.app/sitemap.xml
+Sitemap: https://se-rmutl-three.vercel.app/sitemap.xml
