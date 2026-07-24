@@ -2,6 +2,8 @@ import { Routes, Route } from 'react-router-dom'
 
 // หน้าฝั่งผู้เข้าชม
 import GuestIndex from './pages/GuestIndex'
+import Download from './pages/Download'
+
 
 // หน้าเข้าสู่ระบบและหน้าเลือกห้อง
 import AdminLogin from './pages/admin/AdminLogin'
@@ -47,6 +49,7 @@ function App() {
     <Routes>
       {/* ฝั่งผู้เยี่ยมชม (Guest) */}
       <Route path="/" element={<GuestIndex />} />
+      <Route path="/download" element={<Download />} />
       
       {/* นโยบายและข้อตกลงสำหรับ Guest Mode */}
       <Route path="/privacy-policy" element={<PrivacyPolicy mode="guest" />} />

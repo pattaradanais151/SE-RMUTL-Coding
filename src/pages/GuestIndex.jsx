@@ -5,7 +5,7 @@ import {
   FaCalendarAlt, FaLink, FaExternalLinkAlt, FaClock, FaSignInAlt, 
   FaFileAlt, FaBook, FaMoon, FaSun, FaCodeBranch, 
   FaBullhorn, FaSyncAlt, FaLayerGroup, FaCheckCircle, FaExclamationCircle,
-  FaRocket, FaUserGraduate
+  FaRocket, FaUserGraduate, FaDownload
 } from 'react-icons/fa';
 import './GuestIndex.css';
 
@@ -115,10 +115,16 @@ const GuestIndex = () => {
           </div>
           
           <div className="nav-actions">
+            {/* ปุ่ม Download Desktop App (ใหม่) */}
+            <Link to="/download" className="update-btn" title="Download Desktop App">
+              <FaDownload className="update-icon" /> 
+              <span className="update-text">Desktop App</span>
+            </Link>
+
             {/* ปุ่ม Update App แบบใหม่ที่ชัดเจนขึ้น */}
             <button className="update-btn" onClick={handleHardRefresh} title="Reload Page to Update App">
               <FaSyncAlt className="update-icon" /> 
-              <span className="update-text">Update App & Refresh Page</span>
+              <span className="update-text">Update App & Refresh</span>
             </button>
             
             <button className="icon-btn theme-btn" onClick={toggleDarkMode} title="Toggle Theme">

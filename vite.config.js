@@ -1,35 +1,54 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { VitePWA } from 'vite-plugin-pwa';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'logo.PNG', 'robots.txt', 'sitemap.xml'],
+      registerType: "autoUpdate",
+      includeAssets: [
+        "favicon.svg",
+        "logo.PNG",
+        "robots.txt",
+        "sitemap.xml"
+      ],
       manifest: {
-        name: 'SE-JOB RMUTL',
-        short_name: 'SE-JOB',
-        description: 'ระบบจัดการงานและตารางเรียนสำหรับนักศึกษา SE RMUTL',
-        theme_color: '#4f46e5',
-        background_color: '#f8fafc',
-        display: 'standalone',
-        orientation: 'portrait',
+        name: "SE-JOB RMUTL",
+        short_name: "SE-JOB",
+        description: "ระบบจัดการงานและตารางเรียนสำหรับนักศึกษา SE RMUTL",
+        theme_color: "#4f46e5",
+        background_color: "#f8fafc",
+        display: "standalone",
+        orientation: "portrait",
         icons: [
           {
-            src: '/logo.PNG',
-            sizes: '192x192',
-            type: 'image/png'
+            src: "/logo.PNG",
+            sizes: "192x192",
+            type: "image/png"
           },
           {
-            src: '/logo.PNG',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
+            src: "/logo.PNG",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any maskable"
           }
         ]
       }
     })
-  ]
+  ],
+
+  server: {
+    host: "127.0.0.1",
+    port: 5173,
+    strictPort: true,
+    watch: {
+      ignored: [
+        "**/src-tauri/**",
+        "**/target/**"
+      ]
+    }
+  },
+
+  clearScreen: false
 });
