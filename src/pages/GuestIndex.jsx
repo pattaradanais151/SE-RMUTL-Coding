@@ -19,10 +19,8 @@ const GuestIndex = () => {
   const [previewImage, setPreviewImage] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
   const [isLive, setIsLive] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    // 1. จัดการ Theme
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       document.documentElement.setAttribute('data-theme', 'dark');
@@ -32,55 +30,40 @@ const GuestIndex = () => {
       setDarkMode(false);
     }
 
-    // 2. ดึงข้อมูลครั้งแรก
-    fetchData();
+    fetchData(true);
 
-    // 3. เปิดระบบ Real-time Subscription ของ Supabase
-    const subscription = supabase.channel('guest_public_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'assignments' }, () => fetchData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'class_schedules' }, () => fetchData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'submission_links' }, () => fetchData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => fetchData())
+    const uniqueChannelName = 'guest_public_changes_' + Date.now();
+    const subscription = supabase.channel(uniqueChannelName)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'assignments' }, () => fetchData(false))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'class_schedules' }, () => fetchData(false))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'submission_links' }, () => fetchData(false))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => fetchData(false))
       .subscribe((status) => {
         setIsLive(status === 'SUBSCRIBED');
       });
 
-    // 4. ดักจับ Event Ctrl + F5
-    const handleKeyDown = (e) => {
-      if (e.ctrlKey && e.key === 'F5') {
-        e.preventDefault(); 
-        handleHardRefresh();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-
     return () => {
       supabase.removeChannel(subscription);
-      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
-      // ดึงข้อมูลตารางเรียน
       const { data: schData } = await supabase.from('class_schedules').select('*').eq('is_active', true);
       if (schData) setSchedules(schData);
 
-      // ดึงข้อมูลงานที่ยังไม่หมดเขต
       const now = new Date().toISOString();
       const { data: assignData } = await supabase
         .from('assignments')
-        .select('assignment_id, title, description, due_date, file_url, room_id, subjects ( course_code, course_name )')
+        .select('assignment_id, title, description, due_date, created_at, file_url, room_id, subjects ( course_code, course_name )')
         .gte('due_date', now)
-        .order('due_date', { ascending: true });
+        .order('created_at', { ascending: false });
       if (assignData) setAssignments(assignData);
 
-      // ดึงลิงก์ส่งงาน
       const { data: linkData } = await supabase.from('submission_links').select('*').order('created_at', { ascending: false });
       if (linkData) setLinks(linkData);
 
-      // ดึงประกาศข่าวสาร
       const { data: annData } = await supabase
         .from('announcements')
         .select('*')
@@ -91,14 +74,12 @@ const GuestIndex = () => {
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
-      setLoading(false);
-      setIsRefreshing(false);
+      if (showLoading) setLoading(false);
     }
   };
 
   const handleHardRefresh = () => {
-    setIsRefreshing(true);
-    fetchData();
+    window.location.reload();
   };
 
   const toggleDarkMode = () => {
@@ -112,10 +93,11 @@ const GuestIndex = () => {
   const filteredAssignments = assignments.filter(a => a.room_id === guestRoom);
   const filteredLinks = links.filter(l => l.room_id === guestRoom);
   const filteredAnnouncements = announcements.filter(a => a.room_id === guestRoom || a.room_id === 'all' || !a.room_id);
+  
   const displayAssignments = filteredAssignments.slice(0, 4);
   const displayAnnouncements = filteredAnnouncements.slice(0, 4);
 
-  if (loading && !isRefreshing) {
+  if (loading) {
     return (
       <div className="preloader">
         <div className="spinner"></div>
@@ -125,23 +107,23 @@ const GuestIndex = () => {
 
   return (
     <div className="se-layout font-prompt">
-      {/* 1. Hero Section */}
       <div className="hero-gradient-wrapper">
         <nav className="top-navbar">
           <div className="nav-brand">
-            <img src="/logo-landing.jpg" alt="Logo" className="nav-logo" onError={(e) => { e.target.style.display = 'none' }} />
+            <div className="nav-logo-box">SE</div>
             <span className="nav-title">Software Engineering - RMUTL</span>
           </div>
           
           <div className="nav-actions">
-            
-            <button className={`icon-btn ${isRefreshing ? 'spin' : ''}`} onClick={handleHardRefresh} title="Hard Refresh">
-              <FaSyncAlt />
+            {/* ปุ่ม Update App แบบใหม่ที่ชัดเจนขึ้น */}
+            <button className="update-btn" onClick={handleHardRefresh} title="Reload Page to Update App">
+              <FaSyncAlt className="update-icon" /> 
+              <span className="update-text">Update App & Refresh Page</span>
             </button>
-            <button className="icon-btn" onClick={toggleDarkMode}>
+            
+            <button className="icon-btn theme-btn" onClick={toggleDarkMode} title="Toggle Theme">
               {darkMode ? <FaSun /> : <FaMoon />}
             </button>
-            
             <Link to="/admin/login" className="login-link">
               Sign In <FaSignInAlt />
             </Link>
@@ -209,58 +191,14 @@ const GuestIndex = () => {
                 <div className="skeleton-line long"></div>
               </div>
             </div>
-
           </div>
         </div>
       </div>
 
-      {/* 2. Main Dashboard */}
       <main className="main-full-width">
         <div className="bento-layout">
           
           <div className="col-primary">
-            
-            <div className="content-card">
-              <div className="card-top">
-                <h3 className="card-title">Active Assignments</h3>
-                <span className="card-limit">Latest {displayAssignments.length}</span>
-              </div>
-              <div className="card-body">
-                {displayAssignments.length > 0 ? (
-                  <div className="list-wrapper">
-                    {displayAssignments.map(task => {
-                      const due = new Date(task.due_date);
-                      const isUrgent = Math.ceil((due - new Date()) / (1000 * 60 * 60 * 24)) <= 1;
-
-                      return (
-                        <div key={task.assignment_id} className="list-item">
-                          <div className="item-info">
-                            <div className={`status-indicator ${isUrgent ? 'red' : 'green'}`}>
-                              {isUrgent ? <FaExclamationCircle /> : <FaCheckCircle />}
-                            </div>
-                            <div>
-                              <h4 className="item-name">{task.title}</h4>
-                              <span className="item-course"><FaBook /> {task.subjects?.course_code}</span>
-                            </div>
-                          </div>
-                          <div className="item-meta">
-                            <div className="due-date">
-                              <FaClock /> {due.toLocaleDateString('en-GB', { day:'2-digit', month:'short' })}
-                            </div>
-                            {task.file_url && (
-                              <a href={task.file_url} className="download-btn"><FaFileAlt /></a>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <div className="blank-slate">No pending assignments.</div>
-                )}
-              </div>
-            </div>
-
             <div className="content-card">
               <div className="card-top">
                 <h3 className="card-title">System Announcements</h3>
@@ -286,10 +224,49 @@ const GuestIndex = () => {
               </div>
             </div>
 
+            <div className="content-card">
+              <div className="card-top">
+                <h3 className="card-title">Active Assignments</h3>
+                <span className="card-limit">Latest {displayAssignments.length}</span>
+              </div>
+              <div className="card-body">
+                {displayAssignments.length > 0 ? (
+                  <div className="list-wrapper">
+                    {displayAssignments.map(task => {
+                      const due = new Date(task.due_date);
+                      const isUrgent = Math.ceil((due - new Date()) / (1000 * 60 * 60 * 24)) <= 1;
+
+                      return (
+                        <div key={task.assignment_id} className="list-item">
+                          <div className="item-info">
+                            <div className={`status-indicator ${isUrgent ? 'red' : 'green'}`}>
+                              {isUrgent ? <FaExclamationCircle /> : <FaCheckCircle />}
+                            </div>
+                            <div className="item-details">
+                              <h4 className="item-name">{task.title}</h4>
+                              <span className="item-course"><FaBook className="item-icon-small" /> {task.subjects?.course_code}</span>
+                            </div>
+                          </div>
+                          <div className="item-meta">
+                            <div className="due-date">
+                              <FaClock className="item-icon-small"/> {due.toLocaleDateString('en-GB', { day:'2-digit', month:'short' })}
+                            </div>
+                            {task.file_url && (
+                              <a href={task.file_url} className="download-btn"><FaFileAlt /></a>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="blank-slate">No pending assignments.</div>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="col-secondary">
-            
             <div className="content-card">
               <div className="card-top">
                 <h3 className="card-title">Schedule</h3>
@@ -298,7 +275,7 @@ const GuestIndex = () => {
                 {currentSchedule ? (
                   <div className="schedule-img-box" onClick={() => setPreviewImage(currentSchedule.image_path)}>
                     <img src={currentSchedule.image_path} alt="Schedule" />
-                    <div className="img-overlay">Expand</div>
+                    <div className="img-overlay">Expand View</div>
                   </div>
                 ) : (
                   <div className="blank-slate">No schedule available</div>
@@ -349,20 +326,18 @@ const GuestIndex = () => {
                 </div>
               </div>
             </div>
-
           </div>
+
         </div>
       </main>
 
-      {/* 3. Footer */}
       <footer className="main-footer">
         <p>
           <strong>&copy; {new Date().getFullYear()} <a href="https://fk-myportfolio.netlify.app/" target="_blank" rel="noreferrer" className="footer-link">Pattaradanai Saiwongkham</a>.</strong>
         </p>
-        <p className="footer-version">Version 1.3.1 | All rights reserved.</p>
+        <p className="footer-version">Version 1.3.2 | Updated 24-07-2569 23:20 | All rights reserved.</p>
       </footer>
 
-      {/* Modal View */}
       {previewImage && (
         <div className="fullscreen-modal" onClick={() => setPreviewImage(null)}>
           <div className="modal-content">

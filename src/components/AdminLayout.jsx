@@ -283,7 +283,7 @@ const AdminLayout = () => {
             <strong>&copy; {new Date().getFullYear()} Pattaradanai Saiwongkham.</strong> All rights reserved.
           </div>
           <div className="mt-2 text-xs text-slate-400 dark:text-slate-500 flex items-center gap-3">
-            <span>Version 1.3.0</span>
+            <span>Version 1.3.2 | Updated 24-07-2569 23:20</span>
             <span>|</span>
             <Link to="/admin/privacy-policy" className="hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">Privacy Policy</Link>
             <span>|</span>
