@@ -28,7 +28,7 @@ const Download = () => {
               <p className="text-sm text-gray-500 dark:text-gray-400">รองรับ Windows 10 และ 11 (64-bit)</p>
             </div>
             <a 
-              href="/downloads/SE-JOB RMUTL_1.3.0_x64_en-US.msi" 
+              href="/downloads/SE-JOB RMUTL_1.3.2_x64_en-US.msi" 
               download="SE-JOB RMUTL_1.3.0_x64_en-US.msi"
               className="w-full py-3 px-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 shadow-md hover:shadow-lg transition-all"
             >

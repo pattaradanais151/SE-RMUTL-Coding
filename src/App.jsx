@@ -1,5 +1,8 @@
 import { Routes, Route } from 'react-router-dom'
 
+// --- นำเข้าระบบแจ้งเตือนอัพเดท (เพิ่มใหม่) ---
+import UpdateNotifier from './components/UpdateNotifier'
+
 // หน้าฝั่งผู้เข้าชม
 import GuestIndex from './pages/GuestIndex'
 import Download from './pages/Download'
@@ -46,67 +49,72 @@ import License from './pages/License'
 
 function App() {
   return (
-    <Routes>
-      {/* ฝั่งผู้เยี่ยมชม (Guest) */}
-      <Route path="/" element={<GuestIndex />} />
-      <Route path="/download" element={<Download />} />
-      
-      {/* นโยบายและข้อตกลงสำหรับ Guest Mode */}
-      <Route path="/privacy-policy" element={<PrivacyPolicy mode="guest" />} />
-      <Route path="/license" element={<License mode="guest" />} />
+    <>
+      {/* 🚀 ระบบแจ้งเตือนอัพเดท (จะเช็คเวอร์ชันและลอยอยู่มุมขวาล่างเมื่อมีอัพเดท) */}
+      <UpdateNotifier />
 
-      {/* หน้า Login (ไม่มี Sidebar) */}
-      <Route path="/admin/login" element={<AdminLogin />} />
-      
-      {/* หน้า Portal สำหรับเลือกห้องก่อนเข้า Dashboard (ไม่มี Sidebar) */}
-      <Route path="/admin/portal" element={<AdminPortal />} />
-
-      {/* ฝั่ง Admin (มี Sidebar และ Navbar ควบคุมห้อง) */}
-      <Route path="/admin" element={<AdminLayout />}>
-        {/* หน้าแรกของ Admin */}
-        <Route index element={<AdminDashboard />} /> 
-        <Route path="dashboard" element={<AdminDashboard />} />
+      <Routes>
+        {/* ฝั่งผู้เยี่ยมชม (Guest) */}
+        <Route path="/" element={<GuestIndex />} />
+        <Route path="/download" element={<Download />} />
         
-        {/* จัดการระบบ (Super Admin) */}
-        <Route path="announcements" element={<AdminAnnouncements />} />
-        <Route path="users" element={<AdminUsers />} />
-        <Route path="semesters" element={<AdminSemesters />} />
-        <Route path="subjects" element={<AdminSubjects />} />
+        {/* นโยบายและข้อตกลงสำหรับ Guest Mode */}
+        <Route path="/privacy-policy" element={<PrivacyPolicy mode="guest" />} />
+        <Route path="/license" element={<License mode="guest" />} />
+
+        {/* หน้า Login (ไม่มี Sidebar) */}
+        <Route path="/admin/login" element={<AdminLogin />} />
         
-        {/* บันทึกกิจกรรมระบบ */}
-        <Route path="activity-log" element={<AdminActivityLog />} />
+        {/* หน้า Portal สำหรับเลือกห้องก่อนเข้า Dashboard (ไม่มี Sidebar) */}
+        <Route path="/admin/portal" element={<AdminPortal />} />
 
-        {/* ระบบตรวจสอบการโอนเงิน (Statement) */}
-        <Route path="statement" element={<AdminStatement />} />
-        
-        {/* การจัดการงานและตารางเรียน */}
-        <Route path="schedules" element={<AdminSchedules />} />
-        <Route path="submission-tracking" element={<AdminSubmissionTracking />} />
-        
-        {/* งานภายในรายวิชา (Assignments สั่งงาน/ส่งงาน) */}
-        <Route path="assignments" element={<AdminAssignments />} />
-        <Route path="assignments/create" element={<AdminAssignmentsCreate />} />
-        <Route path="assignments/edit/:id" element={<AdminAssignmentsEdit />} />
-        
-        {/* งานภายในรายวิชา (ชีท/สไลด์/ลิงก์แนบ) */}
-        <Route path="AdminWeeklyMaterials" element={<AdminWeeklyMaterials />} />
-        <Route path="AdminWeeklyMaterials/create" element={<AdminWeeklyMaterialsCreate />} />
-        <Route path="AdminWeeklyMaterials/edit/:id" element={<AdminWeeklyMaterialsEdit />} />
+        {/* ฝั่ง Admin (มี Sidebar และ Navbar ควบคุมห้อง) */}
+        <Route path="/admin" element={<AdminLayout />}>
+          {/* หน้าแรกของ Admin */}
+          <Route index element={<AdminDashboard />} /> 
+          <Route path="dashboard" element={<AdminDashboard />} />
+          
+          {/* จัดการระบบ (Super Admin) */}
+          <Route path="announcements" element={<AdminAnnouncements />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="semesters" element={<AdminSemesters />} />
+          <Route path="subjects" element={<AdminSubjects />} />
+          
+          {/* บันทึกกิจกรรมระบบ */}
+          <Route path="activity-log" element={<AdminActivityLog />} />
 
-        <Route path="links" element={<AdminLinks />} />
+          {/* ระบบตรวจสอบการโอนเงิน (Statement) */}
+          <Route path="statement" element={<AdminStatement />} />
+          
+          {/* การจัดการงานและตารางเรียน */}
+          <Route path="schedules" element={<AdminSchedules />} />
+          <Route path="submission-tracking" element={<AdminSubmissionTracking />} />
+          
+          {/* งานภายในรายวิชา (Assignments สั่งงาน/ส่งงาน) */}
+          <Route path="assignments" element={<AdminAssignments />} />
+          <Route path="assignments/create" element={<AdminAssignmentsCreate />} />
+          <Route path="assignments/edit/:id" element={<AdminAssignmentsEdit />} />
+          
+          {/* งานภายในรายวิชา (ชีท/สไลด์/ลิงก์แนบ) */}
+          <Route path="AdminWeeklyMaterials" element={<AdminWeeklyMaterials />} />
+          <Route path="AdminWeeklyMaterials/create" element={<AdminWeeklyMaterialsCreate />} />
+          <Route path="AdminWeeklyMaterials/edit/:id" element={<AdminWeeklyMaterialsEdit />} />
 
-        {/* คลังเอกสาร และ คู่มือ */}
-        <Route path="resource-center" element={<AdminResourceCenter />} />
-        <Route path="manual" element={<AdminManual />} />
+          <Route path="links" element={<AdminLinks />} />
 
-        {/* โปรไฟล์และอื่นๆ */}
-        <Route path="profile" element={<AdminProfile />} />
+          {/* คลังเอกสาร และ คู่มือ */}
+          <Route path="resource-center" element={<AdminResourceCenter />} />
+          <Route path="manual" element={<AdminManual />} />
 
-        {/* นโยบายและข้อตกลงสำหรับ Admin Mode (ฝังใน Layout) */}
-        <Route path="privacy-policy" element={<PrivacyPolicy mode="admin" />} />
-        <Route path="license" element={<License mode="admin" />} />
-      </Route>
-    </Routes>
+          {/* โปรไฟล์และอื่นๆ */}
+          <Route path="profile" element={<AdminProfile />} />
+
+          {/* นโยบายและข้อตกลงสำหรับ Admin Mode (ฝังใน Layout) */}
+          <Route path="privacy-policy" element={<PrivacyPolicy mode="admin" />} />
+          <Route path="license" element={<License mode="admin" />} />
+        </Route>
+      </Routes>
+    </>
   )
 }
 

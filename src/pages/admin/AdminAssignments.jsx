@@ -3,6 +3,7 @@ import { Link, useOutletContext } from 'react-router-dom' // 🟢
 import { FaClipboardList, FaPlus, FaTrash, FaPen, FaBoxOpen, FaEye, FaUsers } from 'react-icons/fa'
 import { supabase } from '../../lib/supabase'
 import { sendDiscordNotify } from '../../utils/discord'
+import ExternalLink from '../../components/ExternalLink' // 🟢 นำเข้า ExternalLink
 
 const AdminAssignments = () => {
   const { activeRoom } = useOutletContext() // 🟢
@@ -171,7 +172,15 @@ const AdminAssignments = () => {
               <p><b>ชื่องาน:</b> {detailModal.title}</p>
               <p><b>วิชา:</b> {detailModal.subjects?.course_name} ({detailModal.subjects?.course_code})</p>
               <p><b>รายละเอียด:</b> {detailModal.description || '-'}</p>
-              <p><b>ไฟล์แนบ:</b> {detailModal.file_url ? <a href={detailModal.file_url} target="_blank" className="text-indigo-500 hover:underline">ดาวน์โหลด/ดูไฟล์</a> : 'ไม่มีไฟล์แนบ'}</p>
+              <p className="flex items-center">
+                <b>ไฟล์แนบ:</b> 
+                {/* 🟢 เปลี่ยน <a> เป็น <ExternalLink> */}
+                {detailModal.file_url ? (
+                  <ExternalLink href={detailModal.file_url} className="text-indigo-500 hover:underline ml-2">
+                    ดาวน์โหลด/ดูไฟล์
+                  </ExternalLink>
+                ) : ' ไม่มีไฟล์แนบ'}
+              </p>
               
               <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded-xl mt-4 flex items-center justify-between border dark:border-slate-600">
                  <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold">

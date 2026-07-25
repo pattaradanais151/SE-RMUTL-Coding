@@ -3,6 +3,7 @@ import { FaLink, FaPlus, FaTrash, FaPen, FaSave, FaExternalLinkAlt } from 'react
 import { supabase } from '../../lib/supabase'
 import { sendDiscordNotify } from '../../utils/discord'
 import { useOutletContext } from 'react-router-dom' // 🟢
+import ExternalLink from '../../components/ExternalLink'; // 🟢 นำเข้า ExternalLink
 
 const AdminLinks = () => {
   const { activeRoom } = useOutletContext(); // 🟢 รับค่าห้อง
@@ -168,9 +169,10 @@ const AdminLinks = () => {
                             {isEditing ? (
                               <input type="text" name="url" value={editData.url || ''} onChange={handleEditChange} className="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-800 dark:text-white p-2 rounded-lg text-sm outline-none focus:border-indigo-500" />
                             ) : (
-                              <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-2 font-medium">
+                              // 🟢 เปลี่ยนมาใช้ ExternalLink
+                              <ExternalLink href={link.url} className="text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-2 font-medium">
                                 <FaExternalLinkAlt className="text-xs" /> คลิกเพื่อเปิดลิ้งก์
-                              </a>
+                              </ExternalLink>
                             )}
                           </td>
 

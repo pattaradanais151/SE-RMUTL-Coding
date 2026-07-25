@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase'; 
 import { useOutletContext } from 'react-router-dom'; // 🟢
+import ExternalLink from '../../components/ExternalLink'; // 🟢 นำเข้า ExternalLink
 
 const AdminStatement = () => {
   const { activeRoom } = useOutletContext(); // 🟢
@@ -345,9 +346,10 @@ const AdminStatement = () => {
                       </td>
                       <td className="px-6 py-4 text-center">
                         {item.slip_url ? (
-                          <a href={item.slip_url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 text-sm font-medium bg-indigo-50/80 dark:bg-indigo-500/10 px-3 py-1.5 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors border border-indigo-100 dark:border-indigo-500/20">
+                          /* 🟢 เปลี่ยนแท็ก a เป็น ExternalLink 🟢 */
+                          <ExternalLink href={item.slip_url} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 text-sm font-medium bg-indigo-50/80 dark:bg-indigo-500/10 px-3 py-1.5 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors border border-indigo-100 dark:border-indigo-500/20">
                             ดูสลิป
-                          </a>
+                          </ExternalLink>
                         ) : (
                           <span className="text-slate-400 text-sm">-</span>
                         )}

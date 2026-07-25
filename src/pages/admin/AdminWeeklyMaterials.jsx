@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { sendDiscordNotify } from '../../utils/discord';
+import ExternalLink from '../../components/ExternalLink'; // 🟢 นำเข้า ExternalLink
 import {
   FaPlus, FaEdit, FaTrash, FaFilePdf, FaFilePowerpoint,
   FaVideo, FaLink, FaFolderOpen, FaSpinner, FaFileAlt,
@@ -301,15 +302,16 @@ const AdminWeeklyMaterials = () => {
                         </div>
 
                         <div className="pl-2 flex flex-wrap gap-2 pt-3 mt-3 border-t border-slate-100 dark:border-white/5">
+                          {/* 🟢 เปลี่ยนเป็น ExternalLink */}
                           {item.file_url && (
-                            <a href={item.file_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors">
+                            <ExternalLink href={item.file_url} className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors">
                               <FaLink size={10} /> ลิงก์แนบ
-                            </a>
+                            </ExternalLink>
                           )}
                           {item.attached_file_url && (
-                            <a href={item.attached_file_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors">
+                            <ExternalLink href={item.attached_file_url} className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors">
                               <FaFileAlt size={10} /> ไฟล์เอกสาร
-                            </a>
+                            </ExternalLink>
                           )}
                           {!item.file_url && !item.attached_file_url && (
                             <span className="text-xs text-slate-400 dark:text-slate-500">ยังไม่แนบไฟล์หรือลิงก์</span>

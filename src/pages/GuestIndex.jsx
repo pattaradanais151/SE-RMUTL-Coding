@@ -9,6 +9,9 @@ import {
 } from 'react-icons/fa';
 import './GuestIndex.css';
 
+// 🟢 นำเข้า ExternalLink สำหรับจัดการการเปิดลิงก์ใน Desktop App
+import ExternalLink from '../components/ExternalLink';
+
 const GuestIndex = () => {
   const [guestRoom, setGuestRoom] = useState(localStorage.getItem('guest_room') || 'room1');
   const [schedules, setSchedules] = useState([]);
@@ -115,13 +118,13 @@ const GuestIndex = () => {
           </div>
           
           <div className="nav-actions">
-            {/* ปุ่ม Download Desktop App (ใหม่) */}
+            {/* ปุ่ม Download Desktop App */}
             <Link to="/download" className="update-btn" title="Download Desktop App">
               <FaDownload className="update-icon" /> 
               <span className="update-text">Desktop App</span>
             </Link>
 
-            {/* ปุ่ม Update App แบบใหม่ที่ชัดเจนขึ้น */}
+            {/* ปุ่ม Update App */}
             <button className="update-btn" onClick={handleHardRefresh} title="Reload Page to Update App">
               <FaSyncAlt className="update-icon" /> 
               <span className="update-text">Update App & Refresh</span>
@@ -257,8 +260,11 @@ const GuestIndex = () => {
                             <div className="due-date">
                               <FaClock className="item-icon-small"/> {due.toLocaleDateString('en-GB', { day:'2-digit', month:'short' })}
                             </div>
+                            {/* 🟢 เปลี่ยนเป็น ExternalLink สำหรับโหลดไฟล์งาน */}
                             {task.file_url && (
-                              <a href={task.file_url} className="download-btn"><FaFileAlt /></a>
+                              <ExternalLink href={task.file_url} className="download-btn">
+                                <FaFileAlt />
+                              </ExternalLink>
                             )}
                           </div>
                         </div>
@@ -297,9 +303,10 @@ const GuestIndex = () => {
                 {filteredLinks.length > 0 ? (
                   <div className="link-wrapper">
                     {filteredLinks.map(link => (
-                      <a key={link.id} href={link.url} target="_blank" rel="noreferrer" className="link-item">
+                      /* 🟢 เปลี่ยน <a> เป็น <ExternalLink> */
+                      <ExternalLink key={link.id} href={link.url} className="link-item">
                         {link.title} <FaExternalLinkAlt className="ext-icon" />
-                      </a>
+                      </ExternalLink>
                     ))}
                   </div>
                 ) : (
@@ -314,21 +321,22 @@ const GuestIndex = () => {
               </div>
               <div className="card-body p-0">
                 <div className="link-wrapper">
-                  <a href="https://www.borntodev.com/" target="_blank" rel="noreferrer" className="link-item">
+                  {/* 🟢 เปลี่ยน <a> เป็น <ExternalLink> ทั้งหมด */}
+                  <ExternalLink href="https://www.borntodev.com/" className="link-item">
                     BorntoDev <FaExternalLinkAlt className="ext-icon" />
-                  </a>
-                  <a href="https://www.freecodecamp.org/" target="_blank" rel="noreferrer" className="link-item">
+                  </ExternalLink>
+                  <ExternalLink href="https://www.freecodecamp.org/" className="link-item">
                     freeCodeCamp <FaExternalLinkAlt className="ext-icon" />
-                  </a>
-                  <a href="https://milerdev.com/" target="_blank" rel="noreferrer" className="link-item">
+                  </ExternalLink>
+                  <ExternalLink href="https://milerdev.com/" className="link-item">
                     MilerDev <FaExternalLinkAlt className="ext-icon" />
-                  </a>
-                  <a href="https://infinitestack.vercel.app/" target="_blank" rel="noreferrer" className="link-item">
+                  </ExternalLink>
+                  <ExternalLink href="https://infinitestack.vercel.app/" className="link-item">
                     InfiniteStack <FaExternalLinkAlt className="ext-icon" />
-                  </a>
-                  <a href="https://discord.com/invite/PxUTkBHZB" target="_blank" rel="noreferrer" className="link-item discord-link">
+                  </ExternalLink>
+                  <ExternalLink href="https://discord.com/invite/PxUTkBHZB" className="link-item discord-link">
                     Community Discord <FaExternalLinkAlt className="ext-icon" />
-                  </a>
+                  </ExternalLink>
                 </div>
               </div>
             </div>
@@ -339,7 +347,13 @@ const GuestIndex = () => {
 
       <footer className="main-footer">
         <p>
-          <strong>&copy; {new Date().getFullYear()} <a href="https://fk-myportfolio.netlify.app/" target="_blank" rel="noreferrer" className="footer-link">Pattaradanai Saiwongkham</a>.</strong>
+          <strong>
+            &copy; {new Date().getFullYear()}{' '}
+            {/* 🟢 เปลี่ยนลิงก์ Footer เป็น <ExternalLink> */}
+            <ExternalLink href="https://fk-myportfolio.netlify.app/" className="footer-link">
+              Pattaradanai Saiwongkham
+            </ExternalLink>.
+          </strong>
         </p>
         <p className="footer-version">Version 1.3.2 | Updated 24-07-2569 23:20 | All rights reserved.</p>
       </footer>

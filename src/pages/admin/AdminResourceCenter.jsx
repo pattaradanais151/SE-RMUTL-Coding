@@ -3,6 +3,7 @@ import { FaFolderOpen, FaUpload, FaDownload, FaTrash, FaFileAlt, FaInfoCircle } 
 import { supabase } from '../../lib/supabase'
 import { sendDiscordNotify } from '../../utils/discord'
 import { useOutletContext } from 'react-router-dom' // 🟢
+import ExternalLink from '../../components/ExternalLink'; // 🟢 นำเข้า ExternalLink
 
 const AdminResourceCenter = () => {
   const { activeRoom } = useOutletContext(); // 🟢 รับค่าห้อง
@@ -132,7 +133,10 @@ const AdminResourceCenter = () => {
                   <td className="py-4 px-5 text-slate-500 dark:text-slate-400 text-sm">{res.type}</td>
                   <td className="py-4 px-5 text-slate-500 dark:text-slate-400 text-sm">{res.size}</td>
                   <td className="py-4 px-5 text-center flex items-center justify-center">
-                    <a href={res.file_url} target="_blank" rel="noreferrer" className="inline-block text-sky-500 hover:bg-sky-50 dark:hover:bg-sky-900/30 p-2 rounded-lg mr-2 transition-colors"><FaDownload /></a>
+                    {/* 🟢 เปลี่ยน <a> เป็น ExternalLink สำหรับดาวน์โหลดไฟล์ */}
+                    <ExternalLink href={res.file_url} className="inline-block text-sky-500 hover:bg-sky-50 dark:hover:bg-sky-900/30 p-2 rounded-lg mr-2 transition-colors">
+                      <FaDownload />
+                    </ExternalLink>
                     {isSuperAdmin && (
                       <button onClick={() => handleDelete(res.resource_id, res.name)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 p-2 rounded-lg transition-colors"><FaTrash /></button>
                     )}

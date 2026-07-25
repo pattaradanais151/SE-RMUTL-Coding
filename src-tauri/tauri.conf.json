@@ -2,15 +2,13 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "SE-JOB RMUTL",
   "version": "1.3.0",
-  "identifier": "com.pattaradanai.sejob",
-
+  "identifier": "com.FK-GroupBKTH.SE-RMUTL",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173"
   },
-
   "app": {
     "windows": [
       {
@@ -25,7 +23,6 @@
       }
     ]
   },
-
   "bundle": {
     "active": true,
     "targets": "all",
