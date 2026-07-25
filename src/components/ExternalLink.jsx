@@ -3,23 +3,28 @@ import { open } from '@tauri-apps/plugin-shell';
 
 export default function ExternalLink({ href, children, className, ...props }) {
   const handleClick = async (e) => {
-    e.preventDefault(); // ป้องกันไม่ให้เว็บเปลี่ยนหน้า หรือพยายามโหลดใน Webview
-
-    // เช็คว่ารันบน Tauri Desktop App หรือไม่
+    // 🟢 เช็คว่ารันบนแอป Desktop (Tauri) หรือไม่
     if (window.__TAURI_INTERNALS__) {
+      e.preventDefault(); // บล็อกไม่ให้โหลดในหน้าจอแอป
       try {
-        await open(href); // เด้งไปเปิดเบราว์เซอร์ของเครื่อง (Chrome/Edge/Safari)
+        await open(href); // โยนไปให้เบราว์เซอร์ของเครื่องทำงานแทน
       } catch (error) {
         console.error("Failed to open link in Tauri:", error);
       }
-    } else {
-      // ถ้ารันบนเว็บปกติ ให้เปิดแท็บใหม่
-      window.open(href, '_blank');
     }
+    // 🟢 ถ้ารันบนเว็บ Vercel (ไม่มี Tauri)
+    // เราจะไม่ใช้ e.preventDefault() ปล่อยให้แท็ก <a> ของ HTML จัดการดาวน์โหลดตามธรรมชาติเลยครับ!
   };
 
   return (
-    <a href={href} onClick={handleClick} className={className} {...props}>
+    <a 
+      href={href} 
+      onClick={handleClick} 
+      className={className} 
+      target="_blank" 
+      rel="noopener noreferrer" 
+      {...props}
+    >
       {children}
     </a>
   );
