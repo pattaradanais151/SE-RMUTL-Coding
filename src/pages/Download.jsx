@@ -1,8 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaWindows, FaApple, FaLinux, FaArrowLeft } from 'react-icons/fa';
+import ExternalLink from '../components/ExternalLink';
 
 const Download = () => {
+  // 🟢 ลิงก์ตรงไปหาไฟล์ .msi ใน Supabase Storage ของคุณ
+  const downloadUrl = "https://mbzxfdpnvwwtudkfbrqw.supabase.co/storage/v1/object/public/app-installers/SE-JOB%20RMUTL_1.3.2_x64_en-US.msi";
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col items-center pt-20 p-6 font-prompt transition-colors duration-300">
       <div className="max-w-5xl w-full space-y-12">
@@ -27,13 +31,13 @@ const Download = () => {
               <h2 className="text-2xl font-bold">Windows</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">รองรับ Windows 10 และ 11 (64-bit)</p>
             </div>
-            <a 
-              href="/downloads/SE-JOB RMUTL_1.3.2_x64_en-US.msi" 
-              download="SE-JOB RMUTL_1.3.0_x64_en-US.msi"
-              className="w-full py-3 px-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 shadow-md hover:shadow-lg transition-all"
+            {/* 🟢 ใช้ ExternalLink เพื่อบังคับเปิด Browser เครื่อง */}
+            <ExternalLink 
+              href={downloadUrl}
+              className="w-full py-3 px-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 shadow-md hover:shadow-lg transition-all flex items-center justify-center"
             >
               ดาวน์โหลด (.MSI)
-            </a>
+            </ExternalLink>
           </div>
 
           {/* macOS */}
