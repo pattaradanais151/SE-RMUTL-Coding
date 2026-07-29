@@ -4,7 +4,7 @@ import {
   FaBars, FaExternalLinkAlt, FaSignOutAlt, 
   FaTachometerAlt, FaUsersCog, FaCalendarAlt, FaBook, 
   FaTable, FaClipboardList, FaUserCircle, FaLink,
-  FaChartPie, FaFolderOpen, FaHistory, FaBookOpen, FaReceipt, FaBullhorn
+  FaChartPie, FaFolderOpen, FaHistory, FaBookOpen, FaReceipt, FaBullhorn, FaAddressBook
 } from 'react-icons/fa'
 
 const AdminLayout = () => {
@@ -84,14 +84,18 @@ const AdminLayout = () => {
     localStorage.setItem('active_room', room);
   }
 
-  if (!currentUser) return <div className="flex h-screen bg-[#f4f7fa] dark:bg-slate-900 items-center justify-center dark:text-white">กำลังโหลดระบบ...</div>;
+  if (!currentUser) return <div className="flex h-screen bg-slate-50 dark:bg-slate-900 items-center justify-center dark:text-white font-prompt">กำลังโหลดระบบ...</div>;
 
-  const initial = currentUser.username.charAt(0).toUpperCase();
+  const initial = currentUser.username?.charAt(0).toUpperCase() || 'U';
   const isSuperAdmin = currentUser.role === 'super_admin';
   const hasMultipleRooms = currentUser.room_access === 'all'; 
 
+  const displayFullName = currentUser?.name && currentUser?.surname 
+    ? `${currentUser.name} ${currentUser.surname}` 
+    : currentUser?.username;
+
   return (
-    <div className="flex h-screen bg-[#f4f7fa] dark:bg-slate-900 font-prompt overflow-hidden transition-colors duration-300">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-900 font-prompt overflow-hidden transition-colors duration-300">
       
       {/* Sidebar */}
       <aside className={`bg-slate-800 dark:bg-slate-950 text-slate-300 flex flex-col transition-all duration-300 z-20 shrink-0 ${isSidebarOpen ? 'w-64' : 'w-0 md:w-20'} overflow-hidden shadow-xl`}>
@@ -115,8 +119,8 @@ const AdminLayout = () => {
               {initial}
             </div>
           )}
-          <div className={`ml-3 whitespace-nowrap transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 md:hidden'}`}>
-            <div className="font-bold text-white leading-tight">@{currentUser.username}</div>
+          <div className={`ml-3 whitespace-nowrap transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 md:hidden'} overflow-hidden`}>
+            <div className="font-bold text-white leading-tight truncate w-36" title={displayFullName}>{displayFullName}</div>
             <div className={`text-[0.7rem] px-2 py-0.5 rounded mt-1 inline-block border ${isSuperAdmin ? 'bg-amber-500/20 text-amber-400 border-amber-500/20' : 'bg-slate-500/20 text-slate-300 border-slate-500/20'}`}>
               {isSuperAdmin ? 'Super Admin' : 'Admin'}
             </div>
@@ -200,7 +204,7 @@ const AdminLayout = () => {
 
             <li>
               <NavLink to="/admin/AdminWeeklyMaterials" className={({isActive}) => `flex items-center px-3 py-2.5 rounded-lg transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-slate-700/50 hover:text-white'}`}>
-                <FaClipboardList className={`shrink-0 ${isSidebarOpen ? 'mr-3' : 'md:mx-auto'}`} />
+                <FaFolderOpen className={`shrink-0 ${isSidebarOpen ? 'mr-3' : 'md:mx-auto'}`} />
                 <span className={`${isSidebarOpen ? 'block' : 'hidden'} whitespace-nowrap`}>ข้อมูลชีท (Sheet Data)</span>
               </NavLink>
             </li>
@@ -213,6 +217,14 @@ const AdminLayout = () => {
             </li>
 
             <li className={`px-3 pt-4 pb-2 text-[0.7rem] font-bold text-slate-500 uppercase tracking-wider ${!isSidebarOpen && 'hidden'}`}>ศูนย์ช่วยเหลือ</li>
+            
+            <li>
+              <NavLink to="/admin/contacts" className={({isActive}) => `flex items-center px-3 py-2.5 rounded-lg transition-colors ${isActive ? 'bg-sky-600 text-white shadow-md' : 'hover:bg-slate-700/50 hover:text-white'}`}>
+                <FaAddressBook className={`shrink-0 ${isSidebarOpen ? 'mr-3' : 'md:mx-auto'}`} />
+                <span className={`${isSidebarOpen ? 'block' : 'hidden'} whitespace-nowrap`}>รายชื่อเพื่อนแอดมิน</span>
+              </NavLink>
+            </li>
+
             <li>
               <NavLink to="/admin/resource-center" className={({isActive}) => `flex items-center px-3 py-2.5 rounded-lg transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-slate-700/50 hover:text-white'}`}>
                 <FaFolderOpen className={`shrink-0 ${isSidebarOpen ? 'mr-3' : 'md:mx-auto'}`} />
@@ -238,24 +250,24 @@ const AdminLayout = () => {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         
-        <header className="h-16 bg-white dark:bg-slate-800 shadow-sm flex items-center justify-between px-4 z-10 shrink-0 border-b border-transparent dark:border-slate-700 transition-colors duration-300">
+        <header className="h-16 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-sm flex items-center justify-between px-4 z-10 shrink-0 border-b border-transparent dark:border-slate-800 transition-colors duration-300">
           <div className="flex items-center gap-4">
-            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors">
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors">
               <FaBars />
             </button>
-            <Link to="/" target="_blank" className="hidden sm:flex items-center text-indigo-600 dark:text-indigo-400 font-semibold text-sm hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors">
+            <Link to="/" target="_blank" className="hidden sm:flex items-center text-indigo-600 dark:text-indigo-400 font-semibold text-sm hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors bg-indigo-50 dark:bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-100 dark:border-indigo-500/20">
               <FaExternalLinkAlt className="mr-2" /> ดูหน้าเว็บผู้เข้าชม
             </Link>
 
             {hasMultipleRooms && (
-              <div className="hidden md:flex items-center ml-4 bg-slate-100 dark:bg-slate-700 rounded-lg px-2">
-                <span className="text-sm font-medium text-slate-500 dark:text-slate-400 ml-2">พื้นที่:</span>
+              <div className="hidden md:flex items-center ml-2 bg-slate-100 dark:bg-slate-800/80 rounded-xl px-2 border border-slate-200 dark:border-slate-700 shadow-inner">
+                <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 ml-2">พื้นที่:</span>
                 <select
                   value={activeRoom || ''}
                   onChange={handleRoomChange}
-                  className="bg-transparent text-slate-800 dark:text-white text-sm border-none rounded-lg px-3 py-1.5 font-semibold focus:ring-0 outline-none cursor-pointer"
+                  className="bg-transparent text-slate-800 dark:text-white text-sm border-none rounded-lg px-3 py-2 font-bold focus:ring-0 outline-none cursor-pointer"
                 >
                   <option value="room1">ห้องเทียบโอน</option>
                   <option value="room2">ห้องปกติ 4 ปี</option>
@@ -263,33 +275,37 @@ const AdminLayout = () => {
               </div>
             )}
             {!hasMultipleRooms && activeRoom && (
-              <div className="hidden md:flex items-center ml-4 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-sm font-semibold border border-indigo-100 dark:border-indigo-800/50">
+              <div className="hidden md:flex items-center ml-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-sm font-bold border border-indigo-100 dark:border-indigo-800/50 shadow-sm">
                 {activeRoom === 'room1' ? 'ห้องเทียบโอน' : 'ห้องปกติ 4 ปี'}
               </div>
             )}
           </div>
           
-          <button onClick={handleLogout} className="flex items-center text-red-500 font-semibold text-sm hover:text-red-700 dark:hover:text-red-400 transition-colors px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
+          <button onClick={handleLogout} className="flex items-center text-rose-500 font-bold text-sm hover:text-rose-600 dark:hover:text-rose-400 transition-colors px-4 py-2 rounded-xl bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-100 dark:border-rose-500/20 shadow-sm">
             <FaSignOutAlt className="mr-2" /> ออกจากระบบ
           </button>
         </header>
 
-        <main className="flex-1 overflow-auto p-4 md:p-6 text-slate-800 dark:text-slate-200">
+        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 text-slate-800 dark:text-slate-200 custom-scrollbar relative">
           <Outlet context={{ activeRoom }} />
         </main>
 
-        <footer className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400 p-4 flex flex-col items-center shrink-0 transition-colors duration-300">
-          <div>
+        {/* 🟢 Footer อยู่ด้านในเพื่อไม่ให้โดนสไลด์ออก และระบุเวอร์ชันใหม่ */}
+        <footer className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 text-sm text-slate-500 dark:text-slate-400 p-4 flex flex-col items-center shrink-0 transition-colors duration-300 z-10">
+          <div className="font-medium">
             <strong>&copy; {new Date().getFullYear()} Pattaradanai Saiwongkham.</strong> All rights reserved.
           </div>
-          <div className="mt-2 text-xs text-slate-400 dark:text-slate-500 flex items-center gap-3">
-            <span>Version 1.3.2 | Updated 24-07-2569 23:20</span>
-            <span>|</span>
-            <Link to="/admin/privacy-policy" className="hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">Privacy Policy</Link>
-            <span>|</span>
-            <Link to="/admin/license" className="hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">License Agreement</Link>
+          <div className="mt-1.5 text-xs text-slate-400 dark:text-slate-500 flex flex-wrap justify-center items-center gap-x-3 gap-y-1">
+            <span className="font-semibold text-indigo-500 dark:text-indigo-400">Version 1.3.3</span>
+            <span className="hidden sm:inline">|</span>
+            <span>Updated 29-07-2569 23:19</span>
+            <span className="hidden sm:inline">|</span>
+            <Link to="/admin/privacy-policy" className="hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors font-medium">Privacy Policy</Link>
+            <span className="hidden sm:inline">|</span>
+            <Link to="/admin/license" className="hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors font-medium">License Agreement</Link>
           </div>
         </footer>
+        
       </div>
     </div>
   )

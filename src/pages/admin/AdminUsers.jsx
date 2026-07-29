@@ -1,14 +1,17 @@
-import { useState, useEffect } from 'react'
-import { FaUsersCog, FaUserPlus, FaTrash, FaUserShield, FaUser, FaKey, FaSearch, FaFilter, FaExchangeAlt, FaUserLock, FaUserCheck, FaBan, FaTimes } from 'react-icons/fa'
-import { supabase } from '../../lib/supabase'
-import bcrypt from 'bcryptjs'
-import { sendDiscordNotify } from '../../utils/discord'
+import { useState, useEffect } from 'react';
+import { 
+  FaUsersCog, FaUserPlus, FaTrash, FaUserShield, FaUser, 
+  FaKey, FaSearch, FaFilter, FaExchangeAlt, FaUserLock, 
+  FaUserCheck, FaBan, FaTimes 
+} from 'react-icons/fa';
+import { supabase } from '../../lib/supabase';
+import bcrypt from 'bcryptjs';
+import { sendDiscordNotify } from '../../utils/discord';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // 🟢 เพิ่ม room_access
   const [formData, setFormData] = useState({ username: '', password: '', role: 'admin', room_access: 'room1' });
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -19,7 +22,7 @@ const AdminUsers = () => {
 
   const [roleModalUser, setRoleModalUser] = useState(null);
   const [newRole, setNewRole] = useState('admin');
-  const [newRoomAccess, setNewRoomAccess] = useState('room1'); // 🟢 ตัวเลือกห้องเวลาเปลี่ยนสิทธิ์
+  const [newRoomAccess, setNewRoomAccess] = useState('room1');
   const [roleLoading, setRoleLoading] = useState(false);
 
   const [suspendModalUser, setSuspendModalUser] = useState(null);
@@ -36,6 +39,7 @@ const AdminUsers = () => {
 
   const fetchUsers = async () => {
     setLoading(true);
+    // ดึงข้อมูลทั้งหมดรวมถึง name, surname มาด้วย
     const { data, error } = await supabase.from('users').select('*').order('created_at', { ascending: false });
     if (!error && data) setUsers(data);
     setLoading(false);
@@ -59,7 +63,6 @@ const AdminUsers = () => {
     }
 
     const hashedPassword = bcrypt.hashSync(formData.password, 10);
-    // 🟢 Insert room_access ลงฐานข้อมูล
     const { error } = await supabase.from('users').insert([{ 
       username: formData.username, 
       password_hash: hashedPassword, 
@@ -129,7 +132,6 @@ const AdminUsers = () => {
          setRoleLoading(false); return;
       }
 
-      // 🟢 Update ทั้ง role และ room_access
       const { error: updateError } = await supabase.from('users').update({ 
         role: newRole,
         room_access: newRoomAccess
@@ -204,166 +206,236 @@ const AdminUsers = () => {
 
   const filteredUsers = users.filter(u => {
     const safeUsername = u.username || ''; 
-    const matchesSearch = safeUsername.toLowerCase().includes((searchTerm || '').toLowerCase());
+    const fullName = `${u.name || ''} ${u.surname || ''}`.toLowerCase();
+    const searchStr = (searchTerm || '').toLowerCase();
+    
+    const matchesSearch = safeUsername.toLowerCase().includes(searchStr) || fullName.includes(searchStr);
     const matchesRole = roleFilter === 'all' || u.role === roleFilter;
+    
     return matchesSearch && matchesRole;
   });
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h3 className="m-0 font-bold text-slate-800 dark:text-white text-2xl flex items-center mb-1"><FaUsersCog className="text-indigo-600 dark:text-indigo-400 mr-3" /> จัดการผู้ใช้งานระบบ</h3>
-        <p className="text-slate-500 dark:text-slate-400 text-sm m-0">สิทธิ์เฉพาะ Super Admin ในการจัดการบัญชีผู้ดูแลและผู้ช่วยสอน</p>
+    // 🟢 เพิ่ม w-full และ overflow-x-hidden ป้องกันสไลด์ซ้าย-ขวา
+    <div className="w-full max-w-7xl mx-auto relative animate-fade-in font-prompt overflow-x-hidden pb-12">
+      
+      {/* 🔮 Ambient Background Glows (ขังไว้ในกรอบ) */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-[-5%] left-[-5%] w-[400px] h-[400px] bg-indigo-500/10 dark:bg-indigo-500/20 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-[20%] right-[-5%] w-[400px] h-[400px] bg-purple-500/10 dark:bg-purple-500/20 rounded-full blur-[120px]"></div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl p-4 text-white shadow-sm">
-          <div className="text-sm opacity-80">ผู้ใช้งานทั้งหมด</div>
-          <div className="text-2xl font-bold">{users.length} บัญชี</div>
+      <div className="relative z-10 mb-8">
+        <h3 className="m-0 font-extrabold text-slate-800 dark:text-white text-2xl md:text-3xl flex items-center mb-2 tracking-tight">
+          <FaUsersCog className="text-indigo-500 mr-3 drop-shadow-md" /> จัดการผู้ใช้งานระบบ
+        </h3>
+        <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base ml-10 md:ml-12">
+          สิทธิ์เฉพาะ Super Admin ในการจัดการบัญชีผู้ดูแลและผู้ช่วยสอน
+        </p>
+      </div>
+
+      {/* 📊 Stats Cards (ดีไซน์ใหม่แบบ Glassmorphism) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8 relative z-10">
+        <div className="bg-white/80 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-6 border border-white/50 dark:border-slate-700/50 shadow-sm flex items-center justify-between transition-all hover:shadow-md hover:-translate-y-1">
+          <div>
+            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">ผู้ใช้งานทั้งหมด</p>
+            <h4 className="text-3xl font-black text-slate-800 dark:text-white">{users.length} <span className="text-base font-medium text-slate-500">บัญชี</span></h4>
+          </div>
+          <div className="w-14 h-14 rounded-2xl bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-2xl shadow-inner">
+            <FaUsersCog />
+          </div>
         </div>
-        <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-4 text-white shadow-sm">
-          <div className="text-sm opacity-80">Super Admin</div>
-          <div className="text-2xl font-bold">{users.filter(u => u.role === 'super_admin').length} บัญชี</div>
+        
+        <div className="bg-white/80 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-6 border border-white/50 dark:border-slate-700/50 shadow-sm flex items-center justify-between transition-all hover:shadow-md hover:-translate-y-1">
+          <div>
+            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">Super Admin</p>
+            <h4 className="text-3xl font-black text-purple-600 dark:text-purple-400">{users.filter(u => u.role === 'super_admin').length} <span className="text-base font-medium text-slate-500">บัญชี</span></h4>
+          </div>
+          <div className="w-14 h-14 rounded-2xl bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center text-2xl shadow-inner">
+            <FaUserShield />
+          </div>
         </div>
-        <div className="bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl p-4 text-white shadow-sm">
-          <div className="text-sm opacity-80">Admin (ผู้ช่วยสอน)</div>
-          <div className="text-2xl font-bold">{users.filter(u => u.role === 'admin').length} บัญชี</div>
+
+        <div className="bg-white/80 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-6 border border-white/50 dark:border-slate-700/50 shadow-sm flex items-center justify-between transition-all hover:shadow-md hover:-translate-y-1">
+          <div>
+            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">Admin (ผู้ช่วยสอน)</p>
+            <h4 className="text-3xl font-black text-sky-600 dark:text-sky-400">{users.filter(u => u.role === 'admin').length} <span className="text-base font-medium text-slate-500">บัญชี</span></h4>
+          </div>
+          <div className="w-14 h-14 rounded-2xl bg-sky-100 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 flex items-center justify-center text-2xl shadow-inner">
+            <FaUser />
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* 🛠️ Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 relative z-10">
+        
+        {/* Left Col: Add User Form */}
         <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow p-6 mb-6 transition-colors">
-            <h5 className="font-bold text-slate-800 dark:text-white mb-4 flex items-center"><FaUserPlus className="mr-2 text-indigo-500" /> เพิ่มบัญชีใหม่</h5>
-            <form onSubmit={handleAddUser} className="space-y-4" autoComplete="off">
+          <div className="bg-white/80 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] border border-white/50 dark:border-slate-700/50 p-6 md:p-8 transition-all hover:shadow-lg">
+            <h5 className="font-extrabold text-slate-800 dark:text-white mb-6 flex items-center text-xl">
+              <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-blue-500 text-white rounded-xl mr-3 shadow-md shadow-blue-500/20">
+                <FaUserPlus size={16} />
+              </div>
+              เพิ่มบัญชีใหม่
+            </h5>
+            
+            <form onSubmit={handleAddUser} className="space-y-5" autoComplete="off">
               <div>
-                <label className="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-1">ชื่อผู้ใช้ (Username)</label>
-                <input type="text" name="username" required value={formData.username} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white rounded-xl px-4 py-2.5 outline-none focus:border-indigo-500" />
+                <label className="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-1.5 ml-1">ชื่อผู้ใช้ (Username)</label>
+                <input type="text" name="username" required value={formData.username} onChange={handleChange} className="w-full bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-600 dark:text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-inner" />
               </div>
               <div>
-                <label className="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-1">รหัสผ่าน (Password)</label>
-                <input type="password" name="password" required value={formData.password} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white rounded-xl px-4 py-2.5 outline-none focus:border-indigo-500" />
+                <label className="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-1.5 ml-1">รหัสผ่าน (Password)</label>
+                <input type="password" name="password" required value={formData.password} onChange={handleChange} className="w-full bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-600 dark:text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-inner" />
               </div>
               <div>
-                <label className="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-1">ระดับสิทธิ์ (Role)</label>
-                <select name="role" value={formData.role} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white rounded-xl px-4 py-2.5 outline-none focus:border-indigo-500 cursor-pointer">
+                <label className="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-1.5 ml-1">ระดับสิทธิ์ (Role)</label>
+                <select name="role" value={formData.role} onChange={handleChange} className="w-full bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-600 dark:text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-inner">
                   <option value="admin">ผู้ช่วยสอน (Admin)</option>
                   {currentUser?.role === 'super_admin' && <option value="super_admin">ผู้ดูแลระบบสูงสุด (Super Admin)</option>}
                 </select>
               </div>
-              {/* 🟢 Dropdown พื้นที่ */}
               <div>
-                <label className="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-1">สิทธิ์พื้นที่ (Room)</label>
-                <select name="room_access" value={formData.room_access} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white rounded-xl px-4 py-2.5 outline-none focus:border-indigo-500 cursor-pointer">
+                <label className="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-1.5 ml-1">สิทธิ์พื้นที่ (Room)</label>
+                <select name="room_access" value={formData.room_access} onChange={handleChange} className="w-full bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-600 dark:text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-inner">
                   <option value="room1">ห้อง 1 (เทียบโอน)</option>
                   <option value="room2">ห้อง 2 (ปกติ 4 ปี)</option>
                   <option value="all">เข้าได้ทุกห้อง (ทั้งหมด)</option>
                 </select>
               </div>
 
-              <button type="submit" className="w-full flex items-center justify-center bg-indigo-600 text-white font-semibold rounded-xl py-3 mt-4 hover:bg-indigo-700 transition-all">
-                <FaUserPlus className="mr-2" /> สร้างบัญชี
-              </button>
+              <div className="pt-2">
+                <button type="submit" className="w-full flex items-center justify-center bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-bold rounded-xl py-3.5 hover:from-indigo-600 hover:to-blue-700 shadow-[0_4px_15px_rgba(99,102,241,0.3)] transition-all transform hover:-translate-y-0.5">
+                  <FaUserPlus className="mr-2" /> สร้างบัญชีใหม่
+                </button>
+              </div>
             </form>
           </div>
         </div>
 
-        <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow mb-4 flex flex-col sm:flex-row gap-4 items-center justify-between transition-colors">
-            <div className="relative w-full sm:w-72">
-              <FaSearch className="absolute left-3 top-3.5 text-slate-400 text-sm" />
-              <input type="text" placeholder="ค้นหาชื่อผู้ใช้งาน..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white rounded-xl pl-9 pr-4 py-2 text-sm outline-none focus:border-indigo-500" />
+        {/* Right Col: Users Table */}
+        <div className="lg:col-span-2 flex flex-col h-full">
+          <div className="bg-white/80 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] border border-white/50 dark:border-slate-700/50 overflow-hidden flex flex-col flex-1">
+            
+            {/* Search & Filter Bar */}
+            <div className="p-5 md:p-6 border-b border-slate-200 dark:border-slate-700/50 flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50/50 dark:bg-slate-900/30">
+              <div className="relative w-full sm:w-80">
+                <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input 
+                  type="text" 
+                  placeholder="ค้นหาชื่อ, นามสกุล, Username..." 
+                  value={searchTerm} 
+                  onChange={(e) => setSearchTerm(e.target.value)} 
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:text-white rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 shadow-inner" 
+                />
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <FaFilter className="text-slate-400 text-sm hidden sm:block" />
+                <select 
+                  value={roleFilter} 
+                  onChange={(e) => setRoleFilter(e.target.value)} 
+                  className="w-full sm:w-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:text-white rounded-xl px-4 py-2.5 text-sm outline-none cursor-pointer shadow-inner"
+                >
+                  <option value="all">ดูสิทธิ์ทั้งหมด</option>
+                  <option value="super_admin">เฉพาะ Super Admin</option>
+                  <option value="admin">เฉพาะ Admin</option>
+                </select>
+              </div>
             </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-              <FaFilter className="text-slate-400 text-sm" />
-              <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white rounded-xl px-3 py-2 text-sm outline-none cursor-pointer">
-                <option value="all">สิทธิ์ทั้งหมด</option>
-                <option value="super_admin">Super Admin</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-          </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow h-full overflow-hidden flex flex-col transition-colors">
-            <div className="p-0 flex-1 overflow-x-auto">
+            {/* Table */}
+            <div className="flex-1 overflow-x-auto custom-scrollbar p-0">
               <table className="w-full text-left border-collapse min-w-[700px]">
-                <thead className="bg-slate-50 dark:bg-slate-700/50">
+                <thead className="bg-slate-100/50 dark:bg-slate-700/30">
                   <tr>
-                    <th className="py-4 px-5 text-sm uppercase font-semibold text-slate-500 dark:text-slate-400 border-b dark:border-slate-700">ผู้ใช้งาน</th>
-                    <th className="py-4 px-5 text-sm uppercase font-semibold text-slate-500 dark:text-slate-400 border-b dark:border-slate-700">สิทธิ์ / พื้นที่</th>
-                    <th className="py-4 px-5 text-sm uppercase font-semibold text-slate-500 dark:text-slate-400 border-b dark:border-slate-700 text-center">สถานะ</th>
-                    <th className="py-4 px-5 text-sm uppercase font-semibold text-slate-500 dark:text-slate-400 border-b dark:border-slate-700 text-center">จัดการ</th>
+                    <th className="py-4 px-6 text-xs uppercase font-bold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">ผู้ใช้งาน</th>
+                    <th className="py-4 px-6 text-xs uppercase font-bold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">สิทธิ์ / พื้นที่</th>
+                    <th className="py-4 px-6 text-xs uppercase font-bold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 text-center">สถานะ</th>
+                    <th className="py-4 px-6 text-xs uppercase font-bold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 text-center">จัดการ</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
                   {loading ? (
-                    <tr><td colSpan="4" className="text-center py-8 dark:text-slate-300">กำลังโหลด...</td></tr>
+                    <tr><td colSpan="4" className="text-center py-16 dark:text-slate-400"><div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-2"></div>กำลังโหลดข้อมูล...</td></tr>
                   ) : filteredUsers.length === 0 ? (
-                    <tr><td colSpan="4" className="text-center py-8 text-slate-400">ไม่พบข้อมูล</td></tr>
+                    <tr><td colSpan="4" className="text-center py-16 text-slate-500 dark:text-slate-400">ไม่พบผู้ใช้งานที่ตรงกับการค้นหา</td></tr>
                   ) : filteredUsers.map((u) => {
                     const currentlySuspended = isSuspended(u.suspended_until);
                     const isMe = currentUser?.username === u.username;
+                    const displayName = u.name && u.surname ? `${u.name} ${u.surname}` : u.username;
 
                     return (
-                      <tr key={u.user_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 border-b border-slate-100 dark:border-slate-700">
-                        <td className="py-4 px-5 font-bold text-slate-700 dark:text-white flex items-center gap-3">
-                          {u.avatar_url ? (
-                            <img src={u.avatar_url} alt="Profile" className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-600" />
-                          ) : (
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs ${currentlySuspended ? 'bg-red-500' : (u.role === 'super_admin' ? 'bg-indigo-600' : 'bg-slate-400')}`}>
-                              {u.username ? u.username.charAt(0).toUpperCase() : '?'}
+                      <tr key={u.user_id} className="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors">
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-3">
+                            <div className="relative">
+                              {u.avatar_url ? (
+                                <img src={u.avatar_url} alt="Profile" className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-slate-700 shadow-sm" />
+                              ) : (
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold border-2 border-white dark:border-slate-700 shadow-sm ${currentlySuspended ? 'bg-red-500' : (u.role === 'super_admin' ? 'bg-indigo-600' : 'bg-slate-400')}`}>
+                                  {u.username ? u.username.charAt(0).toUpperCase() : '?'}
+                                </div>
+                              )}
+                              {isMe && <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-slate-800 rounded-full"></div>}
                             </div>
-                          )}
-                          <div>
-                            <div>{u.username} {isMe && <span className="text-[10px] bg-sky-100 text-sky-700 px-2 py-0.5 rounded-md ml-1 font-normal">คุณ</span>}</div>
+                            <div className="overflow-hidden">
+                              <div className="font-bold text-slate-800 dark:text-white truncate" title={displayName}>
+                                {displayName}
+                              </div>
+                              <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                @{u.username} {isMe && <span className="ml-1 text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 px-1.5 py-0.5 rounded font-semibold">คุณ</span>}
+                              </div>
+                            </div>
                           </div>
                         </td>
-                        <td className="py-4 px-5">
-                          <div className="flex flex-col items-start gap-1">
+                        <td className="py-4 px-6">
+                          <div className="flex flex-col items-start gap-1.5">
                             {u.role === 'super_admin' ? (
-                              <span className="inline-flex items-center bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 text-xs font-bold px-2.5 py-1 rounded-md"><FaUserShield className="mr-1.5" /> Super Admin</span>
+                              <span className="inline-flex items-center bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-700/50 text-[11px] font-bold px-2 py-0.5 rounded shadow-sm"><FaUserShield className="mr-1.5" /> Super Admin</span>
                             ) : (
-                              <span className="inline-flex items-center bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold px-2.5 py-1 rounded-md"><FaUser className="mr-1.5" /> Admin</span>
+                              <span className="inline-flex items-center bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 text-[11px] font-bold px-2 py-0.5 rounded shadow-sm"><FaUser className="mr-1.5" /> Admin</span>
                             )}
-                            {/* 🟢 แสดงพื้นที่ของแอดมินคนนั้น */}
-                            <span className="text-[11px] text-slate-500 dark:text-slate-400 ml-1">
-                              {u.room_access === 'room1' ? 'ห้อง 1 (เทียบโอน)' : u.room_access === 'room2' ? 'ห้อง 2 (ปกติ 4 ปี)' : u.room_access === 'all' ? 'ทั้งหมด (All)' : '-'}
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                              ห้อง: {u.room_access === 'room1' ? '1 (เทียบโอน)' : u.room_access === 'room2' ? '2 (ปกติ 4 ปี)' : u.room_access === 'all' ? 'เข้าได้ทั้งหมด' : '-'}
                             </span>
                           </div>
                         </td>
-                        <td className="py-4 px-5 text-center">
+                        <td className="py-4 px-6 text-center">
                           {currentlySuspended ? (
-                            <div className="flex flex-col items-center">
-                              <span className="bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 text-[10px] font-bold px-2 py-1 rounded border border-red-200 dark:border-red-800">ถูกระงับสิทธิ์</span>
-                              <span className="text-[10px] text-slate-400 mt-1">ถึง: {new Date(u.suspended_until).toLocaleDateString('th-TH')}</span>
+                            <div className="flex flex-col items-center justify-center">
+                              <span className="bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400 text-[10px] font-bold px-2.5 py-1 rounded border border-red-200 dark:border-red-800 shadow-sm flex items-center gap-1"><FaBan size={10}/> ถูกระงับ</span>
+                              <span className="text-[10px] text-slate-500 mt-1">ถึง: {new Date(u.suspended_until).toLocaleDateString('th-TH')}</span>
                             </div>
                           ) : (
-                            <span className="text-emerald-500 text-xs font-bold"><FaUserCheck className="inline mr-1" /> ปกติ</span>
+                            <span className="inline-flex items-center text-emerald-500 dark:text-emerald-400 text-xs font-bold"><FaUserCheck className="mr-1" /> ปกติ</span>
                           )}
                         </td>
-                        <td className="py-4 px-5 text-center flex items-center justify-center gap-1.5">
-                          <button onClick={() => { setRoleModalUser(u); setNewRole(u.role); setNewRoomAccess(u.room_access || 'room1'); }} className="w-8 h-8 flex items-center justify-center rounded-md border border-sky-200 dark:border-sky-800 text-sky-600 dark:text-sky-400 hover:bg-sky-500 hover:text-white transition-colors" title="ปรับสิทธิ์และพื้นที่">
-                            <FaExchangeAlt className="text-xs" />
-                          </button>
-                          <button onClick={() => setSelectedUser(u)} className="w-8 h-8 flex items-center justify-center rounded-md border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-500 hover:text-white transition-colors" title="รีเซ็ตรหัสผ่าน">
-                            <FaKey className="text-xs" />
-                          </button>
-                          
-                          {isSuperAdmin && !isMe && (
-                            currentlySuspended ? (
-                              <button onClick={() => handleUnsuspend(u)} className="w-8 h-8 flex items-center justify-center rounded-md border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white transition-colors" title="ปลดแบน">
-                                <FaUserCheck className="text-xs" />
-                              </button>
-                            ) : (
-                              <button onClick={() => setSuspendModalUser(u)} className="w-8 h-8 flex items-center justify-center rounded-md border border-orange-200 dark:border-orange-800 text-orange-600 dark:text-orange-400 hover:bg-orange-500 hover:text-white transition-colors" disabled={u.role === 'super_admin'} title={u.role === 'super_admin' ? "ไม่สามารถแบน Super Admin ได้" : "ระงับบัญชี"}>
-                                <FaUserLock className="text-xs" />
-                              </button>
-                            )
-                          )}
+                        <td className="py-4 px-6 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <button onClick={() => { setRoleModalUser(u); setNewRole(u.role); setNewRoomAccess(u.room_access || 'room1'); }} className="p-2 rounded-lg bg-sky-50 text-sky-600 border border-sky-100 dark:bg-sky-500/10 dark:text-sky-400 dark:border-sky-500/20 hover:bg-sky-500 hover:text-white transition-all shadow-sm" title="ปรับสิทธิ์และพื้นที่">
+                              <FaExchangeAlt size={14} />
+                            </button>
+                            <button onClick={() => setSelectedUser(u)} className="p-2 rounded-lg bg-amber-50 text-amber-600 border border-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20 hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="รีเซ็ตรหัสผ่าน">
+                              <FaKey size={14} />
+                            </button>
+                            
+                            {isSuperAdmin && !isMe && (
+                              currentlySuspended ? (
+                                <button onClick={() => handleUnsuspend(u)} className="p-2 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all shadow-sm" title="ปลดแบน">
+                                  <FaUserCheck size={14} />
+                                </button>
+                              ) : (
+                                <button onClick={() => setSuspendModalUser(u)} className="p-2 rounded-lg bg-orange-50 text-orange-600 border border-orange-100 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20 hover:bg-orange-500 hover:text-white transition-all shadow-sm" disabled={u.role === 'super_admin'} title={u.role === 'super_admin' ? "ไม่สามารถแบน Super Admin ได้" : "ระงับบัญชี"}>
+                                  <FaUserLock size={14} />
+                                </button>
+                              )
+                            )}
 
-                          <button onClick={() => handleDelete(u.user_id, u.role, u.username)} className={`w-8 h-8 flex items-center justify-center rounded-md border transition-colors ${u.role === 'super_admin' ? 'border-slate-200 dark:border-slate-700 text-slate-300 dark:text-slate-600 cursor-not-allowed' : 'border-red-200 dark:border-red-900 text-red-500 hover:bg-red-500 hover:text-white'}`} disabled={u.role === 'super_admin'} title="ลบผู้ใช้">
-                            <FaTrash className="text-xs" />
-                          </button>
+                            <button onClick={() => handleDelete(u.user_id, u.role, u.username)} className={`p-2 rounded-lg border transition-all shadow-sm ${u.role === 'super_admin' ? 'bg-slate-50 border-slate-100 text-slate-300 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-600 cursor-not-allowed' : 'bg-red-50 text-red-600 border-red-100 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20 hover:bg-red-500 hover:text-white'}`} disabled={u.role === 'super_admin'} title={u.role === 'super_admin' ? "ห้ามลบ Super Admin" : "ลบผู้ใช้"}>
+                              <FaTrash size={14} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -375,19 +447,28 @@ const AdminUsers = () => {
         </div>
       </div>
 
+      {/* 🔮 Modals (Glassmorphism Style) */}
+      
+      {/* Reset Password Modal */}
       {selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md p-6 shadow-xl relative">
-            <h4 className="font-bold text-slate-800 dark:text-white text-lg mb-2 flex items-center"><FaKey className="mr-2 text-amber-500" /> รีเซ็ตรหัสผ่าน</h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">เปลี่ยนรหัสผ่านสำหรับ <b>@{selectedUser.username}</b> <br/><span className="text-red-500 text-xs">* จำกัดสิทธิ์แก้ไข 2 ครั้ง/ 3 วัน</span></p>
-            <form onSubmit={handleResetPassword} className="space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setResetLoading ? null : setSelectedUser(null)}></div>
+          <div className="relative w-full max-w-md bg-white/95 dark:bg-slate-800/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/50 dark:border-slate-600/50 p-8 transform transition-all animate-fade-in">
+            <h4 className="font-extrabold text-slate-800 dark:text-white text-xl mb-2 flex items-center">
+              <div className="p-2 bg-amber-100 text-amber-500 dark:bg-amber-500/20 dark:text-amber-400 rounded-lg mr-3 shadow-sm"><FaKey size={16} /></div>
+              รีเซ็ตรหัสผ่าน
+            </h4>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+              ตั้งรหัสผ่านใหม่ให้กับ <b>@{selectedUser.username}</b> <br/><span className="text-red-500 text-xs">* จำกัดสิทธิ์แก้ไข 2 ครั้ง / 3 วัน</span>
+            </p>
+            <form onSubmit={handleResetPassword} className="space-y-5">
               <div>
-                <input type="password" required minLength="6" placeholder="รหัสผ่านใหม่อย่างน้อย 6 ตัวอักษร" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-indigo-500" />
+                <input type="password" required minLength="6" placeholder="รหัสผ่านใหม่อย่างน้อย 6 ตัวอักษร" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 dark:text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-inner" />
               </div>
-              <div className="flex gap-2 pt-2">
-                <button type="button" onClick={() => setSelectedUser(null)} className="w-1/2 border dark:border-slate-600 bg-slate-100 dark:bg-slate-700 dark:text-white rounded-xl py-2 text-sm hover:bg-slate-200">ยกเลิก</button>
-                <button type="submit" disabled={resetLoading} className="w-1/2 bg-indigo-600 text-white font-semibold rounded-xl py-2 text-sm hover:bg-indigo-700 disabled:opacity-50">
-                  {resetLoading ? 'กำลังบันทึก...' : 'ยืนยัน'}
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700/50">
+                <button type="button" onClick={() => setSelectedUser(null)} className="px-5 py-2.5 rounded-xl font-bold text-sm text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">ยกเลิก</button>
+                <button type="submit" disabled={resetLoading} className="px-6 py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 shadow-md shadow-indigo-500/30 disabled:opacity-50 transition-all flex items-center">
+                  {resetLoading ? 'กำลังบันทึก...' : 'ยืนยันรหัสผ่านใหม่'}
                 </button>
               </div>
             </form>
@@ -395,31 +476,37 @@ const AdminUsers = () => {
         </div>
       )}
 
+      {/* Change Role Modal */}
       {roleModalUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md p-6 shadow-xl relative">
-            <h4 className="font-bold text-slate-800 dark:text-white text-lg mb-2 flex items-center"><FaExchangeAlt className="mr-2 text-sky-500" /> ปรับระดับสิทธิ์และพื้นที่</h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">สำหรับบัญชี <b>@{roleModalUser.username}</b> <br/><span className="text-red-500 text-xs">* ปรับได้ระดับเดียวกันหรือต่ำกว่า (2 ครั้ง / 3 วัน)</span></p>
-            <form onSubmit={handleChangeRole} className="space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setRoleLoading ? null : setRoleModalUser(null)}></div>
+          <div className="relative w-full max-w-md bg-white/95 dark:bg-slate-800/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/50 dark:border-slate-600/50 p-8 transform transition-all animate-fade-in">
+            <h4 className="font-extrabold text-slate-800 dark:text-white text-xl mb-2 flex items-center">
+              <div className="p-2 bg-sky-100 text-sky-500 dark:bg-sky-500/20 dark:text-sky-400 rounded-lg mr-3 shadow-sm"><FaExchangeAlt size={16} /></div>
+              ปรับระดับสิทธิ์และพื้นที่
+            </h4>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+              ตั้งค่าสิทธิ์ให้ <b>@{roleModalUser.username}</b> <br/><span className="text-red-500 text-xs">* ปรับได้ระดับเดียวกันหรือต่ำกว่า (2 ครั้ง / 3 วัน)</span>
+            </p>
+            <form onSubmit={handleChangeRole} className="space-y-5">
               <div>
-                <label className="block text-slate-700 dark:text-slate-300 text-xs font-semibold mb-1">ระดับสิทธิ์ (Role)</label>
-                <select value={newRole} onChange={(e) => setNewRole(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white rounded-xl px-4 py-2.5 text-sm outline-none cursor-pointer">
+                <label className="block text-slate-700 dark:text-slate-300 text-xs font-semibold mb-1.5 ml-1">ระดับสิทธิ์ (Role)</label>
+                <select value={newRole} onChange={(e) => setNewRole(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 dark:text-white rounded-xl px-4 py-3 text-sm outline-none cursor-pointer focus:ring-2 focus:ring-sky-500 shadow-inner">
                   <option value="admin">ผู้ช่วยสอน (Admin)</option>
                   {currentUser?.role === 'super_admin' && <option value="super_admin">ผู้ดูแลระบบสูงสุด (Super Admin)</option>}
                 </select>
               </div>
-              {/* 🟢 ตัวเลือกเปลี่ยนพื้นที่ (Room Access) */}
               <div>
-                <label className="block text-slate-700 dark:text-slate-300 text-xs font-semibold mb-1">พื้นที่ดูแล (Room Access)</label>
-                <select value={newRoomAccess} onChange={(e) => setNewRoomAccess(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white rounded-xl px-4 py-2.5 text-sm outline-none cursor-pointer">
+                <label className="block text-slate-700 dark:text-slate-300 text-xs font-semibold mb-1.5 ml-1">พื้นที่ดูแล (Room Access)</label>
+                <select value={newRoomAccess} onChange={(e) => setNewRoomAccess(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 dark:text-white rounded-xl px-4 py-3 text-sm outline-none cursor-pointer focus:ring-2 focus:ring-sky-500 shadow-inner">
                   <option value="room1">ห้อง 1 (เทียบโอน)</option>
                   <option value="room2">ห้อง 2 (ปกติ 4 ปี)</option>
                   <option value="all">เข้าได้ทุกห้อง (ทั้งหมด)</option>
                 </select>
               </div>
-              <div className="flex gap-2 pt-2">
-                <button type="button" onClick={() => setRoleModalUser(null)} className="w-1/2 border dark:border-slate-600 bg-slate-100 dark:bg-slate-700 dark:text-white rounded-xl py-2 text-sm hover:bg-slate-200">ยกเลิก</button>
-                <button type="submit" disabled={roleLoading} className="w-1/2 bg-sky-600 text-white font-semibold rounded-xl py-2 text-sm hover:bg-sky-700 disabled:opacity-50">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700/50">
+                <button type="button" onClick={() => setRoleModalUser(null)} className="px-5 py-2.5 rounded-xl font-bold text-sm text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">ยกเลิก</button>
+                <button type="submit" disabled={roleLoading} className="px-6 py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 shadow-md shadow-blue-500/30 disabled:opacity-50 transition-all">
                   {roleLoading ? 'กำลังบันทึก...' : 'ยืนยันการปรับสิทธิ์'}
                 </button>
               </div>
@@ -428,29 +515,36 @@ const AdminUsers = () => {
         </div>
       )}
 
+      {/* Suspend Modal */}
       {suspendModalUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md p-6 shadow-xl relative overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setSuspendModalUser(null)}></div>
+          <div className="relative w-full max-w-md bg-white/95 dark:bg-slate-800/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/50 dark:border-slate-600/50 p-8 overflow-hidden transform transition-all animate-fade-in">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-orange-500"></div>
-            <h4 className="font-bold text-slate-800 dark:text-white text-lg mb-2 flex items-center mt-2"><FaUserLock className="mr-2 text-orange-500 text-xl" /> ระงับบัญชีผู้ใช้งาน</h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">ผู้ใช้ <b>@{suspendModalUser.username}</b> จะไม่สามารถเข้าสู่ระบบหลังบ้านได้ตามระยะเวลาที่คุณกำหนด</p>
+            <h4 className="font-extrabold text-slate-800 dark:text-white text-xl mb-2 flex items-center mt-2">
+              <div className="p-2 bg-orange-100 text-orange-500 dark:bg-orange-500/20 dark:text-orange-400 rounded-lg mr-3 shadow-sm"><FaUserLock size={16} /></div>
+              ระงับบัญชีผู้ใช้งาน
+            </h4>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+              ผู้ใช้ <b>@{suspendModalUser.username}</b> จะไม่สามารถเข้าสู่ระบบหลังบ้านได้ตามระยะเวลาที่คุณกำหนด
+            </p>
             
-            <form onSubmit={handleSuspend} className="space-y-4">
+            <form onSubmit={handleSuspend} className="space-y-5">
               <div>
-                <label className="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-2">เลือกระยะเวลา (วัน)</label>
+                <label className="block text-slate-700 dark:text-slate-300 text-xs font-semibold mb-1.5 ml-1">เลือกระยะเวลา (วัน)</label>
                 <select 
                   value={suspendDays} 
                   onChange={(e) => setSuspendDays(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white rounded-xl px-4 py-3 outline-none cursor-pointer focus:border-orange-500"
+                  className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 dark:text-white rounded-xl px-4 py-3 text-sm outline-none cursor-pointer focus:ring-2 focus:ring-orange-500 shadow-inner"
                 >
                   {suspendOptions.map(day => (
                     <option key={day} value={day}>{day} วัน</option>
                   ))}
                 </select>
               </div>
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setSuspendModalUser(null)} className="w-1/2 border dark:border-slate-600 bg-slate-100 dark:bg-slate-700 dark:text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-slate-200 transition-colors">ยกเลิก</button>
-                <button type="submit" className="w-1/2 bg-orange-500 text-white font-bold rounded-xl py-2.5 text-sm hover:bg-orange-600 shadow-md transition-colors flex items-center justify-center">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700/50">
+                <button type="button" onClick={() => setSuspendModalUser(null)} className="px-5 py-2.5 rounded-xl font-bold text-sm text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">ยกเลิก</button>
+                <button type="submit" className="px-6 py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md shadow-orange-500/30 transition-all flex items-center">
                   <FaBan className="mr-2"/> ยืนยันการแบน
                 </button>
               </div>
@@ -462,4 +556,4 @@ const AdminUsers = () => {
   )
 }
 
-export default AdminUsers
+export default AdminUsers;

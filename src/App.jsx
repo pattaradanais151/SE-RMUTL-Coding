@@ -1,12 +1,15 @@
 import { Routes, Route } from 'react-router-dom'
 
-// --- นำเข้าระบบแจ้งเตือนอัพเดท (เพิ่มใหม่) ---
+// --- นำเข้าระบบแจ้งเตือนอัพเดท ---
 import UpdateNotifier from './components/UpdateNotifier'
+
+// 🟢 นำเข้าระบบจัดการ Profile และ Guard (ที่เพิ่มใหม่)
+import AdminProtectedRoute from './components/AdminProtectedRoute'
+import ContactProfile from './pages/ContactProfile'
 
 // หน้าฝั่งผู้เข้าชม
 import GuestIndex from './pages/GuestIndex'
 import Download from './pages/Download'
-
 
 // หน้าเข้าสู่ระบบและหน้าเลือกห้อง
 import AdminLogin from './pages/admin/AdminLogin'
@@ -40,8 +43,11 @@ import AdminWeeklyMaterialsEdit from './pages/admin/AdminWeeklyMaterialsEdit'
 // หน้า Statement สำหรับตรวจสอบการโอนเงิน
 import AdminStatement from './pages/admin/AdminStatement'
 
-// 🟢 หน้าประกาศข่าวสาร
+// หน้าประกาศข่าวสาร
 import AdminAnnouncements from './pages/admin/AdminAnnouncements'
+
+// 🟢 นำเข้าหน้ารายชื่อเพื่อนแอดมิน
+import AdminContacts from './pages/admin/AdminContacts'
 
 // นำเข้าไฟล์ Privacy Policy และ License
 import PrivacyPolicy from './pages/PrivacyPolicy'
@@ -50,7 +56,7 @@ import License from './pages/License'
 function App() {
   return (
     <>
-      {/* 🚀 ระบบแจ้งเตือนอัพเดท (จะเช็คเวอร์ชันและลอยอยู่มุมขวาล่างเมื่อมีอัพเดท) */}
+      {/* ระบบแจ้งเตือนอัพเดท */}
       <UpdateNotifier />
 
       <Routes>
@@ -64,12 +70,29 @@ function App() {
 
         {/* หน้า Login (ไม่มี Sidebar) */}
         <Route path="/admin/login" element={<AdminLogin />} />
-        
-        {/* หน้า Portal สำหรับเลือกห้องก่อนเข้า Dashboard (ไม่มี Sidebar) */}
-        <Route path="/admin/portal" element={<AdminPortal />} />
 
-        {/* ฝั่ง Admin (มี Sidebar และ Navbar ควบคุมห้อง) */}
-        <Route path="/admin" element={<AdminLayout />}>
+        {/* 🟢 หน้า Contact Profile (บังคับกรอกข้อมูลก่อนเข้าใช้งาน) */}
+        <Route path="/contact-profile" element={<ContactProfile />} />
+        
+        {/* 🟢 หน้า Portal สำหรับเลือกห้อง หุ้มด้วย Guard ตรวจสอบ Profile */}
+        <Route 
+          path="/admin/portal" 
+          element={
+            <AdminProtectedRoute>
+              <AdminPortal />
+            </AdminProtectedRoute>
+          } 
+        />
+
+        {/* 🟢 ฝั่ง Admin (มี Sidebar และ Navbar ควบคุมห้อง) หุ้มด้วย Guard ตรวจสอบ Profile เช่นกัน */}
+        <Route 
+          path="/admin" 
+          element={
+            <AdminProtectedRoute>
+              <AdminLayout />
+            </AdminProtectedRoute>
+          }
+        >
           {/* หน้าแรกของ Admin */}
           <Route index element={<AdminDashboard />} /> 
           <Route path="dashboard" element={<AdminDashboard />} />
@@ -105,6 +128,9 @@ function App() {
           {/* คลังเอกสาร และ คู่มือ */}
           <Route path="resource-center" element={<AdminResourceCenter />} />
           <Route path="manual" element={<AdminManual />} />
+
+          {/* 🟢 หน้าโปรไฟล์เพื่อนแอดมิน */}
+          <Route path="contacts" element={<AdminContacts />} />
 
           {/* โปรไฟล์และอื่นๆ */}
           <Route path="profile" element={<AdminProfile />} />

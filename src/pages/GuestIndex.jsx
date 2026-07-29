@@ -355,7 +355,7 @@ const GuestIndex = () => {
             </ExternalLink>.
           </strong>
         </p>
-        <p className="footer-version">Version 1.3.2 | Updated 24-07-2569 23:20 | All rights reserved.</p>
+        <p className="footer-version">Version 1.3.3 | Updated 29-07-2569 23:19 | All rights reserved.</p>
       </footer>
 
       {previewImage && (
