@@ -14,6 +14,7 @@
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@sentry/react": "^10.69.0",
     "@supabase/supabase-js": "^2.110.0",
     "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-shell": "^2.3.5",
