@@ -1,13 +1,13 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "SE-JOB RMUTL",
-  "version": "1.3.0",
+  "version": "1.3.4",
   "identifier": "com.FK-GroupBKTH.SE-RMUTL",
   "build": {
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build",
-    "frontendDist": "../dist",
-    "devUrl": "http://localhost:5173"
+    "beforeDevCommand": "",
+    "beforeBuildCommand": "",
+    "frontendDist": "https://se-rmutl-three.vercel.app",
+    "devUrl": "https://se-rmutl-three.vercel.app"
   },
   "app": {
     "windows": [

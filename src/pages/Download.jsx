@@ -5,7 +5,7 @@ import ExternalLink from '../components/ExternalLink';
 
 const Download = () => {
   // 🟢 ลิงก์ตรงไปหาไฟล์ .msi ใน Supabase Storage ของคุณ
-  const downloadUrl = "https://mbzxfdpnvwwtudkfbrqw.supabase.co/storage/v1/object/public/app-installers/SE-JOB%20RMUTL_1.3.2_x64_en-US.msi";
+  const downloadUrl = "https://mbzxfdpnvwwtudkfbrqw.supabase.co/storage/v1/object/public/app-installers/SE-JOB RMUTL_1.3.4_x64-setup.exe";
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col items-center pt-20 p-6 font-prompt transition-colors duration-300">
