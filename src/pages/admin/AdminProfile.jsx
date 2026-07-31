@@ -97,6 +97,7 @@ const AdminProfile = () => {
     e.preventDefault();
     setProfileLoading(true);
     
+    // 🟢 อัปเดตข้อมูลรวมถึงอีเมลลง public.users (Trigger จะจัดการ Auth ให้)
     const { error } = await supabase
       .from('users')
       .update({ ...profileData })
@@ -113,10 +114,19 @@ const AdminProfile = () => {
 
   const handleUpdatePassword = async (e) => {
     e.preventDefault();
-    if (passwordData.new_password !== passwordData.confirm_password) { alert('รหัสผ่านใหม่ยืนยันไม่ตรงกัน!'); return; }
+    if (passwordData.new_password !== passwordData.confirm_password) { 
+      alert('รหัสผ่านใหม่ยืนยันไม่ตรงกัน!'); 
+      return; 
+    }
+    
     setLoading(true);
+    
+    // 🟢 ใช้ bcrypt เข้ารหัส แล้วบันทึกลง public.users (Trigger จะโยนรหัสนี้เข้า Auth ให้เอง)
     const hashedPassword = bcrypt.hashSync(passwordData.new_password, 10);
-    const { error } = await supabase.from('users').update({ password_hash: hashedPassword }).eq('user_id', currentUser.user_id);
+    const { error } = await supabase
+      .from('users')
+      .update({ password_hash: hashedPassword })
+      .eq('user_id', currentUser.user_id);
 
     if (error) alert('เปลี่ยนรหัสผ่านไม่สำเร็จ: ' + error.message);
     else {

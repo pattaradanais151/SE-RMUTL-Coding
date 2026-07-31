@@ -72,36 +72,20 @@ const ContactProfile = () => {
 
     setLoading(true);
     try {
-      // 1. ดึงข้อมูลจาก LocalStorage เพื่อหา user_id
       const userStr = localStorage.getItem('se_user');
-      if (!userStr) {
-        throw new Error('Session หมดอายุ กรุณาล็อกอินใหม่');
-      }
+      if (!userStr) throw new Error('Session หมดอายุ กรุณาล็อกอินใหม่');
       
       const sessionData = JSON.parse(userStr);
+      if (!sessionData || !sessionData.user_id) throw new Error('ไม่พบ user_id ในระบบ');
       
-      // 2. เช็ค user_id ให้ชัวร์ว่าไม่เป็น null
-      if (!sessionData || !sessionData.user_id) {
-        throw new Error('ไม่พบ user_id ในระบบ');
-      }
-      
-      // 3. ยิง Update เข้า Supabase ตรงๆ (อ้างอิงคอลัมน์ user_id)
+      // 🟢 บันทึกลง public.users (แล้ว Database Trigger จะเอา Email ไปซิงค์กับระบบ Auth ให้อัตโนมัติ)
       const { error } = await supabase
         .from('users')
-        .update({ 
-          name: name, 
-          surname: surname, 
-          nickname: nickname, 
-          ig: ig, 
-          facebook: facebook, 
-          tel: tel, 
-          email: email
-        })
+        .update({ name, surname, nickname, ig, facebook, tel, email })
         .eq('user_id', sessionData.user_id);
 
       if (error) throw error;
       
-      // 4. บันทึกเสร็จให้ไปหน้า portal
       navigate('/admin/portal');
       
     } catch (error) {
@@ -154,7 +138,7 @@ const ContactProfile = () => {
               <input type="tel" name="tel" value={formData.tel} onChange={handleChange} required />
             </div>
             <div className="form-group">
-              <label>อีเมล (Email)</label>
+              <label>อีเมลในการเข้าสู่ระบบในครั้งถัดไป (Email)</label>
               <input type="email" name="email" value={formData.email} onChange={handleChange} required />
             </div>
           </div>

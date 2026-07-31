@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   FaUser, FaLock, FaSignInAlt, FaArrowLeft, FaGlobe, FaClock,
-  FaTerminal, FaMoon, FaSun, FaExclamationTriangle, FaShieldAlt
+  FaMoon, FaSun, FaExclamationTriangle, FaShieldAlt
 } from 'react-icons/fa';
 import { supabase } from '../../lib/supabase';
 import bcrypt from 'bcryptjs';
@@ -21,7 +21,12 @@ const AdminLogin = () => {
   const [ipStatus, setIpStatus] = useState('loading');
   const [bangkokTime, setBangkokTime] = useState('');
 
-  // จัดการ Theme ให้สอดคล้องกับหน้าหลัก (ใช้ data-theme)
+  // ล้าง Session เก่าออกทุกครั้งที่เข้ามาหน้า Login
+  useEffect(() => {
+    supabase.auth.signOut();
+    localStorage.removeItem('se_user');
+  }, []);
+
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -33,7 +38,6 @@ const AdminLogin = () => {
     }
   }, []);
 
-  // ดึงข้อมูล IP Address
   useEffect(() => {
     const fetchIp = async () => {
       try {
@@ -48,15 +52,11 @@ const AdminLogin = () => {
     fetchIp();
   }, []);
 
-  // นาฬิกาแบบ Realtime
   useEffect(() => {
     const updateClock = () => {
       const formatted = new Intl.DateTimeFormat('th-TH', {
         timeZone: 'Asia/Bangkok',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
       }).format(new Date());
       setBangkokTime(formatted);
     };
@@ -65,7 +65,6 @@ const AdminLogin = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // ฟังก์ชันสลับโหมด
   const toggleDarkMode = () => {
     const newTheme = !darkMode;
     setDarkMode(newTheme);
@@ -73,47 +72,62 @@ const AdminLogin = () => {
     localStorage.setItem('theme', newTheme ? 'dark' : 'light');
   };
 
-  // ฟังก์ชันเข้าสู่ระบบ
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg('');
 
     try {
-      const { data, error } = await supabase
+      // 1. ค้นหาผู้ใช้ด้วย Username หรือ Email (ใช้ maybeSingle เพื่อไม่ให้เกิด Error 406)
+      const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
-        .eq('username', username)
-        .single();
+        .or(`username.eq.${username},email.eq.${username}`)
+        .maybeSingle();
 
-      if (error || !data) {
-        setErrorMsg('ไม่พบชื่อผู้ใช้งานนี้ในระบบ');
-        setLoading(false);
-        return;
+      if (userError || !userData) {
+        throw new Error('ไม่พบชื่อผู้ใช้งานหรืออีเมลนี้ในระบบ');
       }
 
-      const isValid = bcrypt.compareSync(password, data.password_hash);
-      if (!isValid) {
-        setErrorMsg('รหัสผ่านไม่ถูกต้อง');
-        setLoading(false);
-        return;
-      }
-
-      if (data.suspended_until) {
-        const suspendDate = new Date(data.suspended_until);
+      // 2. ตรวจสอบการโดนแบน
+      if (userData.suspended_until) {
+        const suspendDate = new Date(userData.suspended_until);
         const now = new Date();
-        
         if (suspendDate > now) {
-          setErrorMsg(`บัญชีถูกระงับการใช้งาน\n(ปลดแบนวันที่ ${suspendDate.toLocaleDateString('th-TH')} เวลา ${suspendDate.toLocaleTimeString('th-TH')} น.)`);
-          setLoading(false);
-          return;
+          throw new Error(`บัญชีถูกระงับการใช้งานถึงวันที่ ${suspendDate.toLocaleDateString('th-TH')} เวลา ${suspendDate.toLocaleTimeString('th-TH')} น.`);
         }
       }
 
-      localStorage.setItem('se_user', JSON.stringify(data));
-      navigate('/admin/portal'); 
+      // 3. ตรวจสอบรหัสผ่านด้วย bcrypt เป็นด่านหน้า (ไม่ต้องพึ่ง Auth กรณีเซอร์เวอร์มีปัญหา)
+      const isValidPassword = bcrypt.compareSync(password, userData.password_hash);
+      if (!isValidPassword) {
+        throw new Error('รหัสผ่านไม่ถูกต้อง');
+      }
+
+      if (!userData.email) {
+        throw new Error('บัญชีของคุณไม่มีอีเมลผูกไว้ กรุณาติดต่อ Super Admin');
+      }
+
+      // 4. ล็อกอินเข้า Supabase Auth เพื่อปลดล็อก RLS
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: userData.email,
+        password: password,
+      });
+
+      if (authError) {
+        console.error("Supabase Auth Error:", authError);
+        if (authError.status === 500) {
+           throw new Error('ระบบเซิร์ฟเวอร์ขัดข้อง (Internal Server Error)');
+        }
+        throw new Error(authError.message || 'เกิดข้อผิดพลาดในการยืนยันตัวตน');
+      }
+
+      // 5. ล็อกอินสำเร็จ เก็บข้อมูลลง LocalStorage และพานำไปหน้า Portal
+      localStorage.setItem('se_user', JSON.stringify(userData));
+      navigate('/admin/portal');
+
     } catch (err) {
-      setErrorMsg('เกิดข้อผิดพลาดในการเชื่อมต่อกับฐานข้อมูล');
+      setErrorMsg(err.message || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
     } finally {
       setLoading(false);
     }
@@ -121,17 +135,13 @@ const AdminLogin = () => {
 
   return (
     <div className="admin-login-wrapper font-prompt">
-      {/* Background Glows */}
       <div className="login-glow login-glow-1"></div>
       <div className="login-glow login-glow-2"></div>
 
-      {/* Top Status Bar */}
       <div className="login-topbar">
         <div className="topbar-container">
           <Link to="/" className="topbar-back-link">
-            <div className="back-icon-box">
-              <FaArrowLeft />
-            </div>
+            <div className="back-icon-box"><FaArrowLeft /></div>
             กลับสู่หน้าหลัก
           </Link>
 
@@ -153,7 +163,6 @@ const AdminLogin = () => {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="login-main-content">
         <div className="login-glass-card">
           <div className="login-header">
@@ -162,16 +171,11 @@ const AdminLogin = () => {
               {logoError ? (
                 <FaShieldAlt className="logo-fallback" />
               ) : (
-                <img
-                  src="/logo-landing.jpg"
-                  alt="SE-JOB Logo"
-                  className="login-img"
-                  onError={() => setLogoError(true)}
-                />
+                <img src="/logo-landing.jpg" alt="SE-JOB Logo" className="login-img" onError={() => setLogoError(true)} />
               )}
             </div>
             <h2 className="login-title">Admin Portal</h2>
-            <p className="login-subtitle">เข้าสู่ระบบเพื่อจัดการข้อมูล</p>
+            <p className="login-subtitle">เข้าสู่ระบบผ่าน Supabase Auth</p>
           </div>
 
           {errorMsg && (
@@ -183,7 +187,7 @@ const AdminLogin = () => {
 
           <form onSubmit={handleLogin} className="login-form">
             <div className="login-input-group">
-              <label className="login-label">Username</label>
+              <label className="login-label">Username / Email</label>
               <div className="login-input-wrapper">
                 <FaUser className="login-input-icon" />
                 <input
@@ -193,7 +197,7 @@ const AdminLogin = () => {
                   required
                   autoComplete="username"
                   className="login-input"
-                  placeholder="กรอกชื่อผู้ใช้..."
+                  placeholder="กรอกชื่อผู้ใช้ หรือ อีเมล..."
                 />
               </div>
             </div>
@@ -225,9 +229,7 @@ const AdminLogin = () => {
                     Authenticating...
                   </>
                 ) : (
-                  <>
-                    <FaSignInAlt /> Sign In
-                  </>
+                  <><FaSignInAlt /> Sign In</>
                 )}
               </span>
             </button>

@@ -5,14 +5,16 @@ import {
   FaUserCheck, FaBan, FaTimes 
 } from 'react-icons/fa';
 import { supabase } from '../../lib/supabase';
-import bcrypt from 'bcryptjs';
 import { sendDiscordNotify } from '../../utils/discord';
+
+// ❌ นำ bcrypt ออกแล้ว เพื่อป้องกันปัญหา Double Hashing
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  const [formData, setFormData] = useState({ username: '', password: '', role: 'admin', room_access: 'room1' });
+  // ✅ เพิ่ม email เข้าไปใน State
+  const [formData, setFormData] = useState({ username: '', email: '', password: '', role: 'admin', room_access: 'room1' });
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
 
@@ -39,7 +41,6 @@ const AdminUsers = () => {
 
   const fetchUsers = async () => {
     setLoading(true);
-    // ดึงข้อมูลทั้งหมดรวมถึง name, surname มาด้วย
     const { data, error } = await supabase.from('users').select('*').order('created_at', { ascending: false });
     if (!error && data) setUsers(data);
     setLoading(false);
@@ -54,27 +55,30 @@ const AdminUsers = () => {
 
   const handleAddUser = async (e) => {
     e.preventDefault();
-    if (!formData.username || !formData.password) return;
+    if (!formData.username || !formData.email || !formData.password) return;
     
-    const { data: existUser } = await supabase.from('users').select('username').eq('username', formData.username).single();
+    // ตรวจสอบว่ามีผู้ใช้นี้อยู่แล้วหรือไม่
+    const { data: existUser } = await supabase.from('users').select('username, email').or(`username.eq.${formData.username},email.eq.${formData.email}`).single();
     if (existUser) {
-      alert('ชื่อผู้ใช้นี้มีในระบบแล้ว!');
+      alert('ชื่อผู้ใช้หรืออีเมลนี้มีในระบบแล้ว!');
       return;
     }
 
-    const hashedPassword = bcrypt.hashSync(formData.password, 10);
+    // ✅ ส่งรหัสผ่านดิบ (Plain Text) ไปให้ Trigger ฝั่ง Database นำไปสร้างใน auth.users เพื่อให้ Supabase จัดการ Hash อย่างถูกต้อง
     const { error } = await supabase.from('users').insert([{ 
       username: formData.username, 
-      password_hash: hashedPassword, 
+      email: formData.email,
+      password_hash: formData.password, 
       role: formData.role,
       room_access: formData.room_access 
     }]);
 
-    if (error) alert('สร้างบัญชีไม่สำเร็จ: ' + error.message);
-    else {
-      sendDiscordNotify('จัดการผู้ใช้งานระบบ', 'CREATE', `เพิ่มบัญชีใหม่: @${formData.username} (${formData.role}, ห้อง: ${formData.room_access})`, currentUser.username);
+    if (error) {
+      alert('สร้างบัญชีไม่สำเร็จ: ' + error.message);
+    } else {
+      sendDiscordNotify('จัดการผู้ใช้งานระบบ', 'CREATE', `เพิ่มบัญชีใหม่: @${formData.username} (${formData.role}, ห้อง: ${formData.room_access})`, currentUser?.username);
       alert('เพิ่มผู้ใช้ใหม่สำเร็จ!');
-      setFormData({ username: '', password: '', role: 'admin', room_access: 'room1' });
+      setFormData({ username: '', email: '', password: '', role: 'admin', room_access: 'room1' });
       fetchUsers();
     }
   };
@@ -83,6 +87,7 @@ const AdminUsers = () => {
     e.preventDefault();
     if (!selectedUser || !newPassword || newPassword.length < 6) return;
     setResetLoading(true);
+    
     try {
       const threeDaysAgo = new Date();
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
@@ -92,21 +97,35 @@ const AdminUsers = () => {
 
       if (logs && logs.length >= 2) {
         alert('❌ ไม่สามารถเปลี่ยนรหัสผ่านได้! เนื่องจากผู้ใช้รายนี้ถูกเปลี่ยนรหัสผ่านครบกำหนด 2 ครั้งภายใน 3 วันแล้ว');
-        setResetLoading(false); return;
+        setResetLoading(false); 
+        return;
       }
 
-      const hashedPassword = bcrypt.hashSync(newPassword, 10);
-      await supabase.from('users').update({ password_hash: hashedPassword }).eq('user_id', selectedUser.user_id);
-      await supabase.from('password_reset_logs').insert([{ admin_id: currentUser?.user_id, target_user_id: selectedUser.user_id }]);
+      // ✅ ส่งรหัสผ่านดิบเช่นกัน
+      await supabase.from('users').update({ password_hash: newPassword }).eq('user_id', selectedUser.user_id);
       
-      sendDiscordNotify('จัดการผู้ใช้งานระบบ', 'UPDATE', `รีเซ็ตรหัสผ่านของบัญชี: @${selectedUser.username}`, currentUser.username);
+      await supabase.from('password_reset_logs').insert([{ admin_id: currentUser?.user_id, target_user_id: selectedUser.user_id }]);
+      sendDiscordNotify('จัดการผู้ใช้งานระบบ', 'UPDATE', `รีเซ็ตรหัสผ่านของบัญชี: @${selectedUser.username}`, currentUser?.username);
       
       alert(`เปลี่ยนรหัสผ่านของ @${selectedUser.username} สำเร็จแล้ว!`);
-      setSelectedUser(null); setNewPassword('');
+      setSelectedUser(null); 
+      setNewPassword('');
     } catch (error) {
       alert('เกิดข้อผิดพลาด: ' + error.message);
     } finally {
       setResetLoading(false);
+    }
+  };
+
+  const handleDelete = async (id, role, username) => {
+    if (role === 'super_admin') { alert('ไม่อนุญาตให้ลบบัญชี Super Admin ได้!'); return; }
+    
+    if (window.confirm('คุณต้องการลบผู้ใช้งานนี้ใช่หรือไม่? (ย้อนกลับไม่ได้)')) {
+      const { error } = await supabase.from('users').delete().eq('user_id', id);
+      if (!error) {
+        sendDiscordNotify('จัดการผู้ใช้งานระบบ', 'DELETE', `ลบบัญชีผู้ใช้งาน: @${username}`, currentUser?.username);
+        fetchUsers();
+      }
     }
   };
 
@@ -146,7 +165,7 @@ const AdminUsers = () => {
         new_role: newRole
       }]);
 
-      sendDiscordNotify('จัดการผู้ใช้งานระบบ', 'UPDATE', `ปรับสิทธิ์ @${roleModalUser.username} เป็น ${newRole} (ห้อง: ${newRoomAccess})`, currentUser.username);
+      sendDiscordNotify('จัดการผู้ใช้งานระบบ', 'UPDATE', `ปรับสิทธิ์ @${roleModalUser.username} เป็น ${newRole} (ห้อง: ${newRoomAccess})`, currentUser?.username);
 
       alert(`ปรับสิทธิ์และพื้นที่ของ @${roleModalUser.username} สำเร็จ!`);
       setRoleModalUser(null);
@@ -171,7 +190,7 @@ const AdminUsers = () => {
       .eq('user_id', suspendModalUser.user_id);
 
     if (!error) {
-      sendDiscordNotify('จัดการผู้ใช้งานระบบ', 'UPDATE', `ระงับบัญชี @${suspendModalUser.username} เป็นเวลา ${suspendDays} วัน`, currentUser.username);
+      sendDiscordNotify('จัดการผู้ใช้งานระบบ', 'UPDATE', `ระงับบัญชี @${suspendModalUser.username} เป็นเวลา ${suspendDays} วัน`, currentUser?.username);
       alert(`ระงับบัญชี @${suspendModalUser.username} เป็นเวลา ${suspendDays} วัน สำเร็จ`);
       setSuspendModalUser(null);
       fetchUsers();
@@ -187,18 +206,7 @@ const AdminUsers = () => {
         .update({ suspended_until: null })
         .eq('user_id', user.user_id);
       if (!error) {
-        sendDiscordNotify('จัดการผู้ใช้งานระบบ', 'UPDATE', `ปลดแบนบัญชี @${user.username}`, currentUser.username);
-        fetchUsers();
-      }
-    }
-  };
-
-  const handleDelete = async (id, role, username) => {
-    if (role === 'super_admin') { alert('ไม่อนุญาตให้ลบบัญชี Super Admin ได้!'); return; }
-    if (window.confirm('คุณต้องการลบผู้ใช้งานนี้ใช่หรือไม่? (ย้อนกลับไม่ได้)')) {
-      const { error } = await supabase.from('users').delete().eq('user_id', id);
-      if (!error) {
-        sendDiscordNotify('จัดการผู้ใช้งานระบบ', 'DELETE', `ลบบัญชีผู้ใช้งาน: @${username}`, currentUser.username);
+        sendDiscordNotify('จัดการผู้ใช้งานระบบ', 'UPDATE', `ปลดแบนบัญชี @${user.username}`, currentUser?.username);
         fetchUsers();
       }
     }
@@ -216,10 +224,8 @@ const AdminUsers = () => {
   });
 
   return (
-    // 🟢 เพิ่ม w-full และ overflow-x-hidden ป้องกันสไลด์ซ้าย-ขวา
     <div className="w-full max-w-7xl mx-auto relative animate-fade-in font-prompt overflow-x-hidden pb-12">
       
-      {/* 🔮 Ambient Background Glows (ขังไว้ในกรอบ) */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
         <div className="absolute top-[-5%] left-[-5%] w-[400px] h-[400px] bg-indigo-500/10 dark:bg-indigo-500/20 rounded-full blur-[120px]"></div>
         <div className="absolute bottom-[20%] right-[-5%] w-[400px] h-[400px] bg-purple-500/10 dark:bg-purple-500/20 rounded-full blur-[120px]"></div>
@@ -234,7 +240,6 @@ const AdminUsers = () => {
         </p>
       </div>
 
-      {/* 📊 Stats Cards (ดีไซน์ใหม่แบบ Glassmorphism) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8 relative z-10">
         <div className="bg-white/80 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-6 border border-white/50 dark:border-slate-700/50 shadow-sm flex items-center justify-between transition-all hover:shadow-md hover:-translate-y-1">
           <div>
@@ -267,10 +272,8 @@ const AdminUsers = () => {
         </div>
       </div>
 
-      {/* 🛠️ Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 relative z-10">
         
-        {/* Left Col: Add User Form */}
         <div className="lg:col-span-1">
           <div className="bg-white/80 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] border border-white/50 dark:border-slate-700/50 p-6 md:p-8 transition-all hover:shadow-lg">
             <h5 className="font-extrabold text-slate-800 dark:text-white mb-6 flex items-center text-xl">
@@ -285,6 +288,13 @@ const AdminUsers = () => {
                 <label className="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-1.5 ml-1">ชื่อผู้ใช้ (Username)</label>
                 <input type="text" name="username" required value={formData.username} onChange={handleChange} className="w-full bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-600 dark:text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-inner" />
               </div>
+              
+              {/* ✅ เพิ่มฟิลด์ Email สำหรับเชื่อมต่อกับ Supabase Auth */}
+              <div>
+                <label className="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-1.5 ml-1">อีเมล (Email)</label>
+                <input type="email" name="email" required value={formData.email} onChange={handleChange} className="w-full bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-600 dark:text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-inner" />
+              </div>
+
               <div>
                 <label className="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-1.5 ml-1">รหัสผ่าน (Password)</label>
                 <input type="password" name="password" required value={formData.password} onChange={handleChange} className="w-full bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-600 dark:text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-inner" />
@@ -314,11 +324,9 @@ const AdminUsers = () => {
           </div>
         </div>
 
-        {/* Right Col: Users Table */}
         <div className="lg:col-span-2 flex flex-col h-full">
           <div className="bg-white/80 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] border border-white/50 dark:border-slate-700/50 overflow-hidden flex flex-col flex-1">
             
-            {/* Search & Filter Bar */}
             <div className="p-5 md:p-6 border-b border-slate-200 dark:border-slate-700/50 flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50/50 dark:bg-slate-900/30">
               <div className="relative w-full sm:w-80">
                 <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -344,7 +352,6 @@ const AdminUsers = () => {
               </div>
             </div>
 
-            {/* Table */}
             <div className="flex-1 overflow-x-auto custom-scrollbar p-0">
               <table className="w-full text-left border-collapse min-w-[700px]">
                 <thead className="bg-slate-100/50 dark:bg-slate-700/30">
@@ -447,8 +454,6 @@ const AdminUsers = () => {
         </div>
       </div>
 
-      {/* 🔮 Modals (Glassmorphism Style) */}
-      
       {/* Reset Password Modal */}
       {selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
